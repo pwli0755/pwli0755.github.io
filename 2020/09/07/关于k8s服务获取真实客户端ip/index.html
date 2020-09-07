@@ -22,17 +22,20 @@
     var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="about">
-<meta property="og:url" content="http://yoursite.com/about/index.html">
+  <meta name="description" content="当kube-proxy使用iptables模式，会使用NAT技术映射端口号，所以在后端Pod中只能看到一个假的内部IP而非真实的客户端IP。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="关于k8s服务获取真实客户端ip">
+<meta property="og:url" content="http://yoursite.com/2020/09/07/%E5%85%B3%E4%BA%8Ek8s%E6%9C%8D%E5%8A%A1%E8%8E%B7%E5%8F%96%E7%9C%9F%E5%AE%9E%E5%AE%A2%E6%88%B7%E7%AB%AFip/index.html">
 <meta property="og:site_name" content="pwli的学习笔记">
+<meta property="og:description" content="当kube-proxy使用iptables模式，会使用NAT技术映射端口号，所以在后端Pod中只能看到一个假的内部IP而非真实的客户端IP。">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2020-08-19T02:15:18.000Z">
-<meta property="article:modified_time" content="2020-08-19T02:15:18.705Z">
+<meta property="article:published_time" content="2020-09-07T06:51:08.000Z">
+<meta property="article:modified_time" content="2020-09-07T07:45:43.666Z">
 <meta property="article:author" content="pwli">
+<meta property="article:tag" content="k8s">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://yoursite.com/about/">
+<link rel="canonical" href="http://yoursite.com/2020/09/07/%E5%85%B3%E4%BA%8Ek8s%E6%9C%8D%E5%8A%A1%E8%8E%B7%E5%8F%96%E7%9C%9F%E5%AE%9E%E5%AE%A2%E6%88%B7%E7%AB%AFip/">
 
 
 <script id="page-configurations">
@@ -40,13 +43,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'en'
   };
 </script>
 
-  <title>about | pwli的学习笔记
-</title>
+  <title>关于k8s服务获取真实客户端ip | pwli的学习笔记</title>
   
 
 
@@ -187,43 +189,129 @@
       <div class="main-inner">
         <div class="content-wrap">
           
-  
-  
 
-          <div class="content page posts-expand">
+          <div class="content post posts-expand">
             
 
     
-    
-    
-    <div class="post-block" lang="en">
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/07/%E5%85%B3%E4%BA%8Ek8s%E6%9C%8D%E5%8A%A1%E8%8E%B7%E5%8F%96%E7%9C%9F%E5%AE%9E%E5%AE%A2%E6%88%B7%E7%AB%AFip/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="pwli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="pwli的学习笔记">
+    </span>
       <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          关于k8s服务获取真实客户端ip
+        </h1>
 
-<h1 class="post-title" itemprop="name headline">about
-</h1>
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
 
-<div class="post-meta">
+              <time title="Created: 2020-09-07 14:51:08 / Modified: 15:45:43" itemprop="dateCreated datePublished" datetime="2020-09-07T14:51:08+08:00">2020-09-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index"><span itemprop="name">k8s</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>1k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>当<code>kube-proxy</code>使用<code>iptables</code>模式，会使用NAT技术映射端口号，所以在后端Pod中只能看到一个假的内部IP而非真实的客户端IP。</p>
+<a id="more"></a>
+
+<p>在k8s服务负载均衡的实现（<code>kube-proxy</code>）中，目标容器不能获取真实的客户端ip。要想获取到客户端的真实ip，可以修改service的<code>service.spec.externalTrafficPolicy</code> 字段，该字段表示服务是想要路由到本地节点还是集群级别的端点上，有两个可用选项：<code>Cluster</code> 和<code>Local</code>：</p>
+<ul>
+<li><p><strong>“Cluster” traffic policy</strong></p>
+<p>Cluster模式使得后端pod获取不到真实的客户端ip，因为kube-proxy使用了NAT技术。该模式还可能存在冗余的跳转，如节点A和节点B都有后端pod，客户端通过节点B的NodePort类型的Service访问后端pod，此时存在数据包被路由至Service的ClusterIP，<code>kube-proxy</code>设置的转发规则负责将数据包随机转发到一个后端pod上，最终该数据包被路由到了节点A的后端pod上（绕路了…）。该模式下各后端pod被选中的几率相等，有好的总体负载分布。</p>
+</li>
+<li><p><strong>“Local” traffic policy</strong></p>
+<p>Local模式可以保留客户端源IP，并避免了LoadBalancer和NodePort类型服务的第二跳，但存在潜在的流量分布不平衡的风险（如节点A上1个后端pod，节点B上2个后端pod时，外部负载均衡器只保证平均分配流量给各节点，最终导致节点A上的pod负载偏高）。</p>
+</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">example-service</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">example</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">8765</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">9376</span></span><br><span class="line">  <span class="attr">externalTrafficPolicy:</span> <span class="string">Local</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">LoadBalancer</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>Reference：</strong></p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/50585616/kubernetes-metallb-traefik-how-to-get-real-client-ip">https://stackoverflow.com/questions/50585616/kubernetes-metallb-traefik-how-to-get-real-client-ip</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip">https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip</a></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/k8s/" rel="tag"><i class="fa fa-tag"></i> k8s</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/09/07/Dockerfile%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5golang%E7%89%88/" rel="prev" title="Dockerfile最佳实践golang版">
+      <i class="fa fa-chevron-left"></i> Dockerfile最佳实践golang版
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+	
+  </article>
+  
+  
+  
   
 
-</div>
-
-</header>
-
-      
-      
-      
-      <div class="post-body">
-          
-      </div>
-      
-      
-      
-    </div>
-    
-
-    
-    
-    
 
 
           </div>
