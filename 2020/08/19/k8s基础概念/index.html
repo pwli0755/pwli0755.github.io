@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.0.2">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="k8s架构图Kubernetes的原型是Google公司在其10年容器化经验积累中打造的 “秘密武器”——Borg系统，得益于Google的大规模容器编排经验，k8s相比于其他容器解决方案思想更超前，更重要的是，k8s在开源社区落地后，又在整个社区的合力之下得到了极大的改进，修复了很多当年遗留在 Borg 体系中的缺陷和问题。 k8s集群的架构图如下：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="k8s基础概念">
+<meta property="og:url" content="http://yoursite.com/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/index.html">
+<meta property="og:site_name" content="pwli的学习笔记">
+<meta property="og:description" content="k8s架构图Kubernetes的原型是Google公司在其10年容器化经验积累中打造的 “秘密武器”——Borg系统，得益于Google的大规模容器编排经验，k8s相比于其他容器解决方案思想更超前，更重要的是，k8s在开源社区落地后，又在整个社区的合力之下得到了极大的改进，修复了很多当年遗留在 Borg 体系中的缺陷和问题。 k8s集群的架构图如下：">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yoursite.com/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20200819141844974.png">
+<meta property="og:image" content="http://yoursite.com/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20200819114158487.png">
+<meta property="og:image" content="http://yoursite.com/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20200819145759920.png">
+<meta property="og:image" content="http://yoursite.com/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20200819152959339.png">
+<meta property="article:published_time" content="2020-08-19T03:24:53.000Z">
+<meta property="article:modified_time" content="2020-08-25T09:22:17.000Z">
+<meta property="article:author" content="pwli">
+<meta property="article:tag" content="k8s">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20200819141844974.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>k8s基础概念 | pwli的学习笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">pwli的学习笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="pwli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="pwli的学习笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          k8s基础概念
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-08-19 11:24:53" itemprop="dateCreated datePublished" datetime="2020-08-19T11:24:53+08:00">2020-08-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2020-08-25 17:22:17" itemprop="dateModified" datetime="2020-08-25T17:22:17+08:00">2020-08-25</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/k8s/" itemprop="url" rel="index"><span itemprop="name">k8s</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>2.8k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>3 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="k8s架构图"><a href="#k8s架构图" class="headerlink" title="k8s架构图"></a>k8s架构图</h2><p>Kubernetes的原型是Google公司在其10年容器化经验积累中打造的 “秘密武器”——Borg系统，得益于Google的大规模容器编排经验，k8s相比于其他容器解决方案思想更超前，更重要的是，k8s在开源社区落地后，又在整个社区的合力之下得到了极大的改进，修复了很多当年遗留在 Borg 体系中的缺陷和问题。</p>
+<p>k8s集群的架构图如下：</p>
+<a id="more"></a>
+
+<img data-src="/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20200819141844974.png" class="" title="image-20200819141844974">
+
+<p>一个 Kubernetes 集群由一组节点（node, 可以是一台物理或虚拟的机器）组成。这些节点上运行 Kubernetes 所管理的容器化应用。集群具有至少一个工作节点和至少一个主节点。工作节点托管作为应用程序组件的 Pod 。主节点管理集群中的工作节点和 Pod 。可以部署多个主节点用于为集群提供故障转移和高可用性。</p>
+<h3 id="控制平面组件（Control-Plane-Components）"><a href="#控制平面组件（Control-Plane-Components）" class="headerlink" title="控制平面组件（Control Plane Components）"></a>控制平面组件（Control Plane Components）</h3><p>控制平面的组件对集群做出全局决策以及检测和响应集群事件，如负责Pod的调度，及Deployment副本数的维护等。</p>
+<p>控制平面组件可以在集群中的任何节点上运行。 然而，为了简单起见，通常会在主节点上部署所有的控制平面组件，且不会在部署了控制平面组件的节点上运行用户Pod。</p>
+<h4 id="kube-apiserver"><a href="#kube-apiserver" class="headerlink" title="kube-apiserver"></a>kube-apiserver</h4><p>主节点上负责提供 Kubernetes API 服务的组件；它是 Kubernetes 控制面的前端。kube-apiserver 在设计上考虑了水平扩缩的需要。 换言之，通过部署多个实例可以实现扩缩。</p>
+<h4 id="etcd"><a href="#etcd" class="headerlink" title="etcd"></a>etcd</h4><p>etcd 是兼具一致性和高可用性的键值数据库，可以作为保存 Kubernetes 所有集群数据的后台数据库。</p>
+<h4 id="kube-scheduler"><a href="#kube-scheduler" class="headerlink" title="kube-scheduler"></a>kube-scheduler</h4><p>kube-scheduler监视那些新创建的未指定运行节点的 Pod，负责依据资源需求、亲和性等因素调度这些Pod到合适的节点上运行。</p>
+<h4 id="kube-controller-manager"><a href="#kube-controller-manager" class="headerlink" title="kube-controller-manager"></a>kube-controller-manager</h4><p>kube-controller-manager为在主节点上运行的控制器的组件。</p>
+<p>从逻辑上讲，每个控制器都是一个单独的进程，但是为了降低复杂性，它们都被编译到同一个可执行文件，并在一个进程中运行。</p>
+<p>这些控制器包括:</p>
+<ul>
+<li>节点控制器（Node Controller）: 负责在节点出现故障时进行通知和响应。</li>
+<li>副本控制器（Replication Controller）: 负责为系统中的每个副本控制器对象维护正确数量的 Pod。</li>
+<li>端点控制器（Endpoints Controller）: 填充端点(Endpoints)对象(即加入 Service 与 Pod)。</li>
+<li>服务帐户和令牌控制器（Service Account &amp; Token Controllers）: 为新的命名空间创建默认帐户和 API 访问令牌.</li>
+</ul>
+<h3 id="Node-组件"><a href="#Node-组件" class="headerlink" title="Node 组件"></a>Node 组件</h3><p>节点组件在每个节点上运行，维护运行的 Pod 并提供 Kubernetes 运行环境。</p>
+<h4 id="kubelet"><a href="#kubelet" class="headerlink" title="kubelet"></a>kubelet</h4><p>Kubernetes上可以运行各种容器环境，如<a target="_blank" rel="noopener" href="http://www.docker.com/">Docker</a>、 <a target="_blank" rel="noopener" href="https://containerd.io/">containerd</a>、<a target="_blank" rel="noopener" href="https://cri-o.io/">cri-o</a>、 <a target="_blank" rel="noopener" href="https://github.com/kubernetes-incubator/rktlet">rktlet</a> 等。</p>
+<p>一个在集群中每个节点上都运行着一个kubelet，它通过直接跟容器引擎层交互，实现容器的生命周期管理。</p>
+<h4 id="kube-proxy"><a href="#kube-proxy" class="headerlink" title="kube-proxy"></a>kube-proxy</h4><p>kube-proxy 是集群中每个节点上运行的网络代理,实现 Kubernetes Service 概念的一部分。</p>
+<p>kube-proxy 维护节点上的网络规则。这些网络规则允许从集群内部或外部的网络与 Pod 进行网络通信。</p>
+<p>简言之，kube-proxy是负责写入规则至 IPTABLES、IPVS以 实现服务映射访问的。</p>
+<h2 id="k8s-基础资源类型"><a href="#k8s-基础资源类型" class="headerlink" title="k8s 基础资源类型"></a>k8s 基础资源类型</h2><img data-src="/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20200819114158487.png" class="" title="image-20200819114158487">
+
+<h3 id="Pod"><a href="#Pod" class="headerlink" title="Pod"></a>Pod</h3><p>Pod是 Kubernetes 项目中的最小编排单位，一个Pod内可以运行一个或多个容器，各容器共享一个网络栈。按照可自愈性，Pod又可分为自助式Pod和被控制器管理的Pod。其中自己单独创建的Pod未被任何控制器管理，当Pod异常退出时不会重启恢复。</p>
+<img data-src="/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20200819145759920.png" class="" title="image-20200819145759920">
+
+<p>上图中，Pod中的容器A和容器B共享一套由Pod的基础容器Infra创建的网络栈。</p>
+<h3 id="控制器"><a href="#控制器" class="headerlink" title="控制器"></a>控制器</h3><p>控制器管理特定的Pod，Kubernetes推崇声明式API，我们只需告诉Kubernetes需要什么样的Pod，需要多少个副本，Kubernetes就在其控制循环里不断查询Pod的当前状态对比期望状态，使得Pod的状态向期望状态收敛。而背后真正控制Pod的创建与删除的，正是控制器。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">for</span> &#123;</span><br><span class="line">  实际状态 := 获取集群中对象X的实际状态（Actual State）</span><br><span class="line">  期望状态 := 获取集群中对象X的期望状态（Desired State）</span><br><span class="line">  <span class="keyword">if</span> 实际状态 == 期望状态&#123;</span><br><span class="line">    什么都不做</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    执行编排动作，将实际状态调整为期望状态</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="ReplicaSet-ReplicationController"><a href="#ReplicaSet-ReplicationController" class="headerlink" title="ReplicaSet/ReplicationController"></a>ReplicaSet/ReplicationController</h4><p>ReplicationController和ReplicaSet用来确保容器应用的副本数始终和用户声明的副本数相等，即如果当前容器副本数大于声明数，会删除多余的Pod，如果Pod因异常退出等原因导致当前Pod数目小于声明数，控制器会创建新的Pod以满足副本数的要求。ReplicaSet与ReplicationController的唯一区别在于，ReplicaSet支持集合式的选择器，建议使用ReplicaSet。</p>
+<h4 id="Deployments"><a href="#Deployments" class="headerlink" title="Deployments"></a>Deployments</h4><p>虽然可以直接声明ReplicaSet来管理Pod，但应用的部署还是推荐使用Deployment来自动管理ReplicaSet，且Deployment支持滚动更新和回滚。</p>
+<img data-src="/2020/08/19/k8s%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5/image-20200819152959339.png" class="" title="image-20200819152959339">
+
+<p>Deployment 控制器实际操纵的是 ReplicaSet 对象，而不是直接管理 Pod 对象；在更新时，Deployment会新建一个ReplicaSet并保留原ReplicaSet（用来回退），而ReplicaSet负责底层Pod的更新和回退。</p>
+<h4 id="StatefulSets"><a href="#StatefulSets" class="headerlink" title="StatefulSets"></a>StatefulSets</h4><p>相对于Deployment和ReplicaSets，StatefulSets的不同之处在于它是用来管理有状态的Pod的，其特点为：</p>
+<ul>
+<li>稳定的持久化存储，即Pod重新调度后还是能访问到相同的持久化数据（基于PVC实现）</li>
+<li>稳定的网络标识，即Pod被重新调度后其PodName和HostName保持不变（基于Headless Service实现）</li>
+<li>有序部署，有序扩缩容，即Pod是有顺序的，在部署或扩展的时候要严格按照顺序依次执行（基于init conteiners实现）</li>
+</ul>
+<h4 id="DaemonSet"><a href="#DaemonSet" class="headerlink" title="DaemonSet"></a>DaemonSet</h4><p>DaemonSet保证在每个节点上都运行且只运行一个Pod实例，当有新的Node加入集群时，也会为该Node新增一个Pod，当有Node从集群移除时，该Pod被回收。删除DaemonSet会删除它所管理的所有Pod。</p>
+<h4 id="Jobs"><a href="#Jobs" class="headerlink" title="Jobs"></a>Jobs</h4><p>Jobs负责批处理任务，它保证任务Pod的成功结束。</p>
+<h4 id="CronJobs"><a href="#CronJobs" class="headerlink" title="CronJobs"></a>CronJobs</h4><p>定时任务控制器，CronJob 与 Job 的关系，正如同 Deployment 与 ReplicaSet 的关系一样。CronJob 是一个专门用来管理 Job 对象的控制器。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/k8s/" rel="tag"><i class="fa fa-tag"></i> k8s</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2020/08/19/k8s%E7%9A%84%E7%BD%91%E7%BB%9C%E9%80%9A%E8%AE%AF%E6%96%B9%E5%BC%8F/" rel="next" title="k8s的网络通讯方式">
+      k8s的网络通讯方式 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+	
+  </article>
+  
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#k8s%E6%9E%B6%E6%9E%84%E5%9B%BE"><span class="nav-number">1.</span> <span class="nav-text">k8s架构图</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A7%E5%88%B6%E5%B9%B3%E9%9D%A2%E7%BB%84%E4%BB%B6%EF%BC%88Control-Plane-Components%EF%BC%89"><span class="nav-number">1.1.</span> <span class="nav-text">控制平面组件（Control Plane Components）</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#kube-apiserver"><span class="nav-number">1.1.1.</span> <span class="nav-text">kube-apiserver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#etcd"><span class="nav-number">1.1.2.</span> <span class="nav-text">etcd</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#kube-scheduler"><span class="nav-number">1.1.3.</span> <span class="nav-text">kube-scheduler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#kube-controller-manager"><span class="nav-number">1.1.4.</span> <span class="nav-text">kube-controller-manager</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Node-%E7%BB%84%E4%BB%B6"><span class="nav-number">1.2.</span> <span class="nav-text">Node 组件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#kubelet"><span class="nav-number">1.2.1.</span> <span class="nav-text">kubelet</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#kube-proxy"><span class="nav-number">1.2.2.</span> <span class="nav-text">kube-proxy</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#k8s-%E5%9F%BA%E7%A1%80%E8%B5%84%E6%BA%90%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">k8s 基础资源类型</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Pod"><span class="nav-number">2.1.</span> <span class="nav-text">Pod</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%A7%E5%88%B6%E5%99%A8"><span class="nav-number">2.2.</span> <span class="nav-text">控制器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#ReplicaSet-ReplicationController"><span class="nav-number">2.2.1.</span> <span class="nav-text">ReplicaSet&#x2F;ReplicationController</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Deployments"><span class="nav-number">2.2.2.</span> <span class="nav-text">Deployments</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#StatefulSets"><span class="nav-number">2.2.3.</span> <span class="nav-text">StatefulSets</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#DaemonSet"><span class="nav-number">2.2.4.</span> <span class="nav-text">DaemonSet</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Jobs"><span class="nav-number">2.2.5.</span> <span class="nav-text">Jobs</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CronJobs"><span class="nav-number">2.2.6.</span> <span class="nav-text">CronJobs</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="pwli"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">pwli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yourname" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/yourname" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+	      	  <div id="clound163music">
+	    <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=31460355&auto=1&height=66"></iframe>
+	  </div>
+
+  </aside>
+
+  <div id="sidebar-dimmer"></div>
+  
+
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">pwli</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">31k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">28 mins.</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+   
+
+  <script async src="/js/cursor/fireworks.js"></script>
+
+</body>
+</html>
