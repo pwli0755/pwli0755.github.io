@@ -679,7 +679,10 @@
   <entry>
     <title>易忽略的Golang编码规范</title>
     <url>/2020/09/14/%E6%98%93%E5%BF%BD%E7%95%A5%E7%9A%84Golang%E7%BC%96%E7%A0%81%E8%A7%84%E8%8C%83/</url>
-    <content><![CDATA[<ul>
+    <content><![CDATA[<p>自己易忽略的一些规范</p>
+<a id="more"></a>
+
+<ul>
 <li><h3 id="Interface-合理性验证"><a href="#Interface-合理性验证" class="headerlink" title="Interface 合理性验证"></a>Interface 合理性验证</h3></li>
 </ul>
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> _ http.Handler = (*Handler)(<span class="literal">nil</span>)</span><br></pre></td></tr></table></figure>
@@ -688,8 +691,6 @@
 <li>关于Mutex</li>
 </ul>
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> smap <span class="keyword">struct</span> &#123;</span><br><span class="line">  sync.Mutex <span class="comment">// only for unexported types（仅适用于非导出类型）</span></span><br><span class="line"></span><br><span class="line">  data <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> SMap <span class="keyword">struct</span> &#123;</span><br><span class="line">  mu sync.Mutex <span class="comment">// 对于导出类型，请使用私有锁</span></span><br><span class="line"></span><br><span class="line">  data <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<a id="more"></a>
 
 <ul>
 <li><h3 id="Channel-的-size-要么是-1，要么是无缓冲的"><a href="#Channel-的-size-要么是-1，要么是无缓冲的" class="headerlink" title="Channel 的 size 要么是 1，要么是无缓冲的"></a>Channel 的 size 要么是 1，要么是无缓冲的</h3><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 大小：1</span></span><br><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">1</span>) <span class="comment">// 或者</span></span><br><span class="line"><span class="comment">// 无缓冲 channel，大小为 0</span></span><br><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br></pre></td></tr></table></figure>

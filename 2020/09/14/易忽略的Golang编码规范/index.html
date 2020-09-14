@@ -22,15 +22,15 @@
     var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Interface 合理性验证  1var _ http.Handler &#x3D; (*Handler)(nil)   关于Mutex  1234567891011type smap struct &amp;#123;  sync.Mutex &#x2F;&#x2F; only for unexported types（仅适用于非导出类型）  data map[string]string&amp;#125;type SMap struc">
+  <meta name="description" content="自己易忽略的一些规范">
 <meta property="og:type" content="article">
 <meta property="og:title" content="易忽略的Golang编码规范">
 <meta property="og:url" content="http://yoursite.com/2020/09/14/%E6%98%93%E5%BF%BD%E7%95%A5%E7%9A%84Golang%E7%BC%96%E7%A0%81%E8%A7%84%E8%8C%83/index.html">
 <meta property="og:site_name" content="pwli的学习笔记">
-<meta property="og:description" content="Interface 合理性验证  1var _ http.Handler &#x3D; (*Handler)(nil)   关于Mutex  1234567891011type smap struct &amp;#123;  sync.Mutex &#x2F;&#x2F; only for unexported types（仅适用于非导出类型）  data map[string]string&amp;#125;type SMap struc">
+<meta property="og:description" content="自己易忽略的一些规范">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2020-09-14T01:37:55.000Z">
-<meta property="article:modified_time" content="2020-09-14T01:41:26.507Z">
+<meta property="article:modified_time" content="2020-09-14T01:43:35.079Z">
 <meta property="article:author" content="pwli">
 <meta property="article:tag" content="golang">
 <meta name="twitter:card" content="summary">
@@ -221,7 +221,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-09-14 09:37:55 / Modified: 09:41:26" itemprop="dateCreated datePublished" datetime="2020-09-14T09:37:55+08:00">2020-09-14</time>
+              <time title="Created: 2020-09-14 09:37:55 / Modified: 09:43:35" itemprop="dateCreated datePublished" datetime="2020-09-14T09:37:55+08:00">2020-09-14</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -258,7 +258,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <ul>
+        <p>自己易忽略的一些规范</p>
+<a id="more"></a>
+
+<ul>
 <li><h3 id="Interface-合理性验证"><a href="#Interface-合理性验证" class="headerlink" title="Interface 合理性验证"></a>Interface 合理性验证</h3></li>
 </ul>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> _ http.Handler = (*Handler)(<span class="literal">nil</span>)</span><br></pre></td></tr></table></figure>
@@ -267,8 +270,6 @@
 <li>关于Mutex</li>
 </ul>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> smap <span class="keyword">struct</span> &#123;</span><br><span class="line">  sync.Mutex <span class="comment">// only for unexported types（仅适用于非导出类型）</span></span><br><span class="line"></span><br><span class="line">  data <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> SMap <span class="keyword">struct</span> &#123;</span><br><span class="line">  mu sync.Mutex <span class="comment">// 对于导出类型，请使用私有锁</span></span><br><span class="line"></span><br><span class="line">  data <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<a id="more"></a>
 
 <ul>
 <li><h3 id="Channel-的-size-要么是-1，要么是无缓冲的"><a href="#Channel-的-size-要么是-1，要么是无缓冲的" class="headerlink" title="Channel 的 size 要么是 1，要么是无缓冲的"></a>Channel 的 size 要么是 1，要么是无缓冲的</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 大小：1</span></span><br><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">1</span>) <span class="comment">// 或者</span></span><br><span class="line"><span class="comment">// 无缓冲 channel，大小为 0</span></span><br><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br></pre></td></tr></table></figure>

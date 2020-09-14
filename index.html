@@ -216,7 +216,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2020-09-14 09:37:55 / Modified: 09:41:26" itemprop="dateCreated datePublished" datetime="2020-09-14T09:37:55+08:00">2020-09-14</time>
+              <time title="Created: 2020-09-14 09:37:55 / Modified: 09:43:35" itemprop="dateCreated datePublished" datetime="2020-09-14T09:37:55+08:00">2020-09-14</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -253,15 +253,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <ul>
-<li><h3 id="Interface-合理性验证"><a href="#Interface-合理性验证" class="headerlink" title="Interface 合理性验证"></a>Interface 合理性验证</h3></li>
-</ul>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> _ http.Handler = (*Handler)(<span class="literal">nil</span>)</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>关于Mutex</li>
-</ul>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> smap <span class="keyword">struct</span> &#123;</span><br><span class="line">  sync.Mutex <span class="comment">// only for unexported types（仅适用于非导出类型）</span></span><br><span class="line"></span><br><span class="line">  data <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> SMap <span class="keyword">struct</span> &#123;</span><br><span class="line">  mu sync.Mutex <span class="comment">// 对于导出类型，请使用私有锁</span></span><br><span class="line"></span><br><span class="line">  data <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+          <p>自己易忽略的一些规范</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2020/09/14/%E6%98%93%E5%BF%BD%E7%95%A5%E7%9A%84Golang%E7%BC%96%E7%A0%81%E8%A7%84%E8%8C%83/#more" rel="contents">
