@@ -689,6 +689,8 @@
 </ul>
 <figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> smap <span class="keyword">struct</span> &#123;</span><br><span class="line">  sync.Mutex <span class="comment">// only for unexported types（仅适用于非导出类型）</span></span><br><span class="line"></span><br><span class="line">  data <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> SMap <span class="keyword">struct</span> &#123;</span><br><span class="line">  mu sync.Mutex <span class="comment">// 对于导出类型，请使用私有锁</span></span><br><span class="line"></span><br><span class="line">  data <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<a id="more"></a>
+
 <ul>
 <li><h3 id="Channel-的-size-要么是-1，要么是无缓冲的"><a href="#Channel-的-size-要么是-1，要么是无缓冲的" class="headerlink" title="Channel 的 size 要么是 1，要么是无缓冲的"></a>Channel 的 size 要么是 1，要么是无缓冲的</h3><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 大小：1</span></span><br><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>, <span class="number">1</span>) <span class="comment">// 或者</span></span><br><span class="line"><span class="comment">// 无缓冲 channel，大小为 0</span></span><br><span class="line">c := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br></pre></td></tr></table></figure>
 </li>
