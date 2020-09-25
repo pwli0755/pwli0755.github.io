@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.0.2">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":true,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文详细介绍go-swagger 通过注解生成swagger spec的使用。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="go-swagger入门">
+<meta property="og:url" content="http://yoursite.com/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/index.html">
+<meta property="og:site_name" content="pwli的学习笔记">
+<meta property="og:description" content="本文详细介绍go-swagger 通过注解生成swagger spec的使用。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yoursite.com/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922164629425.png">
+<meta property="og:image" content="http://yoursite.com/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922165513541.png">
+<meta property="og:image" content="http://yoursite.com/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922174004223.png">
+<meta property="og:image" content="http://yoursite.com/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922174503466.png">
+<meta property="og:image" content="http://yoursite.com/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922174835908.png">
+<meta property="article:published_time" content="2020-09-22T03:54:30.000Z">
+<meta property="article:modified_time" content="2020-09-22T09:54:51.643Z">
+<meta property="article:author" content="pwli">
+<meta property="article:tag" content="golang">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922164629425.png">
+
+<link rel="canonical" href="http://yoursite.com/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>go-swagger入门 | pwli的学习笔记</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">pwli的学习笔记</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="pwli">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="pwli的学习笔记">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          go-swagger入门
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2020-09-22 11:54:30 / Modified: 17:54:51" itemprop="dateCreated datePublished" datetime="2020-09-22T11:54:30+08:00">2020-09-22</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/golang/" itemprop="url" rel="index"><span itemprop="name">golang</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="Symbols count in article">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">Symbols count in article: </span>
+              <span>8.9k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>8 mins.</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文详细介绍go-swagger 通过注解生成swagger spec的使用。</p>
+<a id="more"></a>
+
+<p>相比<a target="_blank" rel="noopener" href="https://github.com/swaggo/swag">Swag</a>，<a target="_blank" rel="noopener" href="https://github.com/go-swagger/go-swagger">go-swagger</a>具有更强大和丰富的功能，go-swagger支持Design First和Code First两种模式，其中Design First是指先定义接口swagger.json，根据接口自动生成代码；Code First是指先编写代码和注解，再自动生成swagger.json文件。本文只介绍Code First模式的常规使用。</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h3 id="二进制安装"><a href="#二进制安装" class="headerlink" title="二进制安装"></a>二进制安装</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">download_url=$(curl -s https://api.github.com/repos/go-swagger/go-swagger/releases/latest | \</span><br><span class="line">  jq -r <span class="string">&#x27;.assets[] | select(.name | contains(&quot;&#x27;</span><span class="string">&quot;<span class="subst">$(uname | tr &#x27;[:upper:]&#x27; &#x27;[:lower:]&#x27;)</span>&quot;</span><span class="string">&#x27;_amd64&quot;)) | .browser_download_url&#x27;</span>)</span><br><span class="line">curl -o /usr/<span class="built_in">local</span>/bin/swagger -L<span class="string">&#x27;#&#x27;</span> <span class="string">&quot;<span class="variable">$download_url</span>&quot;</span></span><br><span class="line">chmod +x /usr/<span class="built_in">local</span>/bin/swagger</span><br></pre></td></tr></table></figure>
+
+<h3 id="源码安装"><a href="#源码安装" class="headerlink" title="源码安装"></a>源码安装</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go install github.com/go-swagger/go-swagger/cmd/swagger</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="swagger-工具使用"><a href="#swagger-工具使用" class="headerlink" title="swagger 工具使用"></a>swagger 工具使用</h2><h3 id="generate-spec"><a href="#generate-spec" class="headerlink" title="generate spec"></a>generate spec</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">$ swagger generate spec -<span class="built_in">help</span></span><br><span class="line">Usage:</span><br><span class="line">  swagger [OPTIONS] generate spec [spec-OPTIONS]</span><br><span class="line"></span><br><span class="line">generate a swagger spec document from a go application</span><br><span class="line"></span><br><span class="line">Application Options:</span><br><span class="line">  -q, --quiet                  silence logs</span><br><span class="line">      --<span class="built_in">log</span>-output=LOG-FILE    redirect logs to file</span><br><span class="line"></span><br><span class="line">Help Options:</span><br><span class="line">  -h, --<span class="built_in">help</span>                   Show this <span class="built_in">help</span> message</span><br><span class="line"></span><br><span class="line">[spec <span class="built_in">command</span> options]</span><br><span class="line">      -w, --work-dir=          the base path to use (default: .) <span class="comment"># 指定工作目录，默认为当前目录</span></span><br><span class="line">      -t, --tags=              build tags</span><br><span class="line">      -m, --scan-models        includes models that were annotated with <span class="string">&#x27;swagger:model&#x27;</span></span><br><span class="line">          --compact            when present, doesn<span class="string">&#x27;t prettify the json # 压缩json缩进,不美化格式</span></span><br><span class="line"><span class="string">      -o, --output=            the file to write to  # 输出文件位置</span></span><br><span class="line"><span class="string">      -i, --input=             the file to use as input</span></span><br><span class="line"><span class="string">      -c, --include=           include packages matching pattern</span></span><br><span class="line"><span class="string">      -x, --exclude=           exclude packages matching pattern</span></span><br><span class="line"><span class="string">          --include-tag=       include routes having specified tags (can be specified many times)</span></span><br><span class="line"><span class="string">          --exclude-tag=       exclude routes having specified tags (can be specified many times)</span></span><br><span class="line"><span class="string">          --exclude-deps       exclude all dependencies of project</span></span><br></pre></td></tr></table></figure>
+
+<p>一般只需提前cd只main.go所在目录，然后执行<code> swagger generate spec -o swagger.json</code>即可。</p>
+<p>swagger会从main.go开始，借助golang的抽象语法树遍历我们的代码，找到格式匹配的注解并转换成相应的swagger spec。</p>
+<h3 id="swagger-serve"><a href="#swagger-serve" class="headerlink" title="swagger serve"></a>swagger serve</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">$ swagger serve -<span class="built_in">help</span></span><br><span class="line">Usage:</span><br><span class="line">  swagger [OPTIONS] serve [serve-OPTIONS]</span><br><span class="line"></span><br><span class="line">serve a spec and swagger or redoc documentation ui</span><br><span class="line"></span><br><span class="line">Application Options:</span><br><span class="line">  -q, --quiet                         silence logs</span><br><span class="line">      --<span class="built_in">log</span>-output=LOG-FILE           redirect logs to file</span><br><span class="line"></span><br><span class="line">Help Options:</span><br><span class="line">  -h, --<span class="built_in">help</span>                          Show this <span class="built_in">help</span> message</span><br><span class="line"></span><br><span class="line">[serve <span class="built_in">command</span> options]</span><br><span class="line">          --base-path=                the base path to serve the spec and UI at</span><br><span class="line">      -F, --flavor=[redoc|swagger]    the flavor of docs, can be swagger or redoc (default: redoc) <span class="comment"># 渲染风格，redoc和swagger两种</span></span><br><span class="line">          --doc-url=                  override the url <span class="built_in">which</span> takes a url query param to render the doc ui</span><br><span class="line">          --no-open                   when present won<span class="string">&#x27;t open the the browser to show the url</span></span><br><span class="line"><span class="string">          --no-ui                     when present, only the swagger spec will be served</span></span><br><span class="line"><span class="string">          --flatten                   when present, flatten the swagger spec before serving it</span></span><br><span class="line"><span class="string">      -p, --port=                     the port to serve this site [$PORT]</span></span><br><span class="line"><span class="string">          --host=                     the interface to serve this site, defaults to 0.0.0.0 [$HOST]</span></span><br><span class="line"><span class="string"></span></span><br></pre></td></tr></table></figure>
+
+<p>swagger serve 用于根据上一布生成的swagger.json，渲染出可用于交互的html页面。如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ swagger serve ./swagger.json -F swagger</span><br><span class="line">2020/09/22 16:45:30 serving docs at http://localhost:33235/docs</span><br></pre></td></tr></table></figure>
+
+<img data-src="/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922164629425.png" class="" title="image-20200922164629425">
+
+
+
+<h2 id="根据注解自动生成spec"><a href="#根据注解自动生成spec" class="headerlink" title="根据注解自动生成spec"></a>根据注解自动生成spec</h2><p>下面我们来看一下go-swagger注解指定的格式及转换规则。</p>
+<h3 id="swagger-meta"><a href="#swagger-meta" class="headerlink" title="swagger:meta"></a>swagger:meta</h3><p>swagger:meta定义接口全局信息，主要有以下几个字段：</p>
+<table>
+<thead>
+<tr>
+<th>标记</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Terms Of Service</td>
+<td>描述使用接口服务的一些协议，比如免责等</td>
+</tr>
+<tr>
+<td>Consumes</td>
+<td>描述接口默认请求的mime类型值，如果有多个，每个类型占据一行。支持的MIME类型有json，yaml，xml，txt，bin，urlform，multipartform</td>
+</tr>
+<tr>
+<td>Produces</td>
+<td>描述接口默认响应的mime类型值，如果有多个，每个类型占据一行</td>
+</tr>
+<tr>
+<td>Schemes</td>
+<td>描述接口默认支持的协议类型，可能的值有http，https，ws，wss</td>
+</tr>
+<tr>
+<td>Version</td>
+<td>当前接口的版本</td>
+</tr>
+<tr>
+<td>Host</td>
+<td>接口服务所在的域名</td>
+</tr>
+<tr>
+<td>Base path</td>
+<td>接口默认的根路径</td>
+</tr>
+<tr>
+<td>Contact</td>
+<td>通常来说是接口文档编写者的联系方式，格式：John <a href="mailto:&#68;&#97;&#x6e;&#x6a;&#111;&#x68;&#110;&#46;&#100;&#97;&#x6e;&#x40;&#101;&#x78;&#x61;&#109;&#x70;&#108;&#x65;&#46;&#x63;&#111;&#109;">&#68;&#97;&#x6e;&#x6a;&#111;&#x68;&#110;&#46;&#100;&#97;&#x6e;&#x40;&#101;&#x78;&#x61;&#109;&#x70;&#108;&#x65;&#46;&#x63;&#111;&#109;</a></td>
+</tr>
+<tr>
+<td>License</td>
+<td>接口文档遵循的许可证名称</td>
+</tr>
+</tbody></table>
+<p>示例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//// docs/docs.go</span></span><br><span class="line"><span class="comment">// Package classification echo-swagger-demo API.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// the purpose of this application is to provide an application</span></span><br><span class="line"><span class="comment">// that is using plain go code to define an API</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// This should demonstrate all the possible comment annotations</span></span><br><span class="line"><span class="comment">// that are available to turn go code into a fully compliant swagger 2.0 spec</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// Terms Of Service:</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// there are no TOS at this moment, use at your own risk we take no responsibility</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Schemes: http</span></span><br><span class="line"><span class="comment">//     Host: 10.7.11.134:1323</span></span><br><span class="line"><span class="comment">//     BasePath: /v2</span></span><br><span class="line"><span class="comment">//     Version: 0.0.1</span></span><br><span class="line"><span class="comment">//     License: MIT http://opensource.org/licenses/MIT</span></span><br><span class="line"><span class="comment">//     Contact: John Doe&lt;john.doe@example.com&gt; http://john.doe.com</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Consumes:</span></span><br><span class="line"><span class="comment">//     - application/json</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Produces:</span></span><br><span class="line"><span class="comment">//     - application/json</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Security:</span></span><br><span class="line"><span class="comment">//     - api_key:</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     SecurityDefinitions:</span></span><br><span class="line"><span class="comment">//     api_key:</span></span><br><span class="line"><span class="comment">//          type: apiKey</span></span><br><span class="line"><span class="comment">//          name: KEY</span></span><br><span class="line"><span class="comment">//          in: header</span></span><br><span class="line"><span class="comment">//     oauth2:</span></span><br><span class="line"><span class="comment">//         type: oauth2</span></span><br><span class="line"><span class="comment">//         authorizationUrl: /oauth2/auth</span></span><br><span class="line"><span class="comment">//         tokenUrl: /oauth2/token</span></span><br><span class="line"><span class="comment">//         in: header</span></span><br><span class="line"><span class="comment">//         scopes:</span></span><br><span class="line"><span class="comment">//           bar: foo</span></span><br><span class="line"><span class="comment">//         flow: accessCode</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Extensions:</span></span><br><span class="line"><span class="comment">//     x-meta-value: value</span></span><br><span class="line"><span class="comment">//     x-meta-array:</span></span><br><span class="line"><span class="comment">//       - value1</span></span><br><span class="line"><span class="comment">//       - value2</span></span><br><span class="line"><span class="comment">//     x-meta-array-obj:</span></span><br><span class="line"><span class="comment">//       - name: obj</span></span><br><span class="line"><span class="comment">//         value: field</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// swagger:meta</span></span><br></pre></td></tr></table></figure>
+
+<p>生成后的spec的渲染效果：</p>
+<img data-src="/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922165513541.png" class="" title="image-20200922165513541">
+
+<h3 id="swagger-route"><a href="#swagger-route" class="headerlink" title="swagger:route"></a>swagger:route</h3><p>swagger:route 指定路由注解，格式如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">swagger:route [method] [path pattern] [?tag1 tag2 tag3] [operation id]</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<ul>
+<li>method为HTTP请求方式</li>
+<li>path pattern为请求url（去掉Base path前缀）</li>
+<li>tag代表该接口归属的模块，一个路由指定多个tag，swagger UI 可以根据tag分组</li>
+<li>operation id为该路由的唯一标识，供swagger:parameters使用</li>
+</ul>
+<p>swagger:route一行结束后一般会紧跟两行注释，表明该接口的用途，其中第一行为接口概要信息，以”.”结束；第二行为详细描述。最后Responses指定可能的响应头状态码及响应体名称，响应体名称与swagger:response对应。</p>
+<p>示例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//// docs/user.go</span></span><br><span class="line"><span class="comment">// swagger:route POST /login users login</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// check user&#x27;s password and login.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// 用户登录接口blablabla</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Responses:</span></span><br><span class="line"><span class="comment">//       default: genericError</span></span><br><span class="line"><span class="comment">//       200: userLoginResponse</span></span><br><span class="line"><span class="comment">//       422: validationError</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="swagger-parameters"><a href="#swagger-parameters" class="headerlink" title="swagger:parameters"></a>swagger:parameters</h3><p>swagger:parameters指定请求参数的类型，格式如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">swagger:parameters [operationid1 operationid2]</span><br></pre></td></tr></table></figure>
+
+<p>operationid用于指定该参数可用于哪些route，可指定多个。</p>
+<p>示例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//// docs/user.go</span></span><br><span class="line"><span class="comment">// swagger:parameters login</span></span><br><span class="line"><span class="keyword">type</span> UserLoginReqWrapper <span class="keyword">struct</span> &#123;</span><br><span class="line">   <span class="comment">// 用户登录认证需要用户名和密码</span></span><br><span class="line">   <span class="comment">// in: body</span></span><br><span class="line">   Body api.UserLoginReq</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">////////another file////////////</span></span><br><span class="line"><span class="comment">// api/user_parameters.go</span></span><br><span class="line"><span class="keyword">type</span> UserLoginReq <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// Name stand for username</span></span><br><span class="line">    <span class="comment">// Maximum length    : 3</span></span><br><span class="line">    <span class="comment">// example: lee</span></span><br><span class="line">    Name <span class="keyword">string</span> <span class="string">`json:&quot;name&quot;`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Password stand for user&#x27;s password</span></span><br><span class="line">    <span class="comment">// Maximum length    : 10</span></span><br><span class="line">    <span class="comment">// example: 123</span></span><br><span class="line">    Password <span class="keyword">string</span> <span class="string">`json:&quot;password&quot;`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>swagger:parameters可使用以下注解：</p>
+<table>
+<thead>
+<tr>
+<th>Annotation</th>
+<th>Format</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>In</strong></td>
+<td>参数位置：header、formData、path、query、body</td>
+</tr>
+<tr>
+<td><strong>Collection Format</strong></td>
+<td>when a slice the formatter for the collection when serialized on the request</td>
+</tr>
+<tr>
+<td><strong>Maximum</strong></td>
+<td>整数的最大值</td>
+</tr>
+<tr>
+<td><strong>Minimum</strong></td>
+<td>整数的最小值</td>
+</tr>
+<tr>
+<td><strong>Multiple of</strong></td>
+<td>倍数</td>
+</tr>
+<tr>
+<td><strong>Minimum length</strong></td>
+<td>字符串的最小长度</td>
+</tr>
+<tr>
+<td><strong>Maximum length</strong></td>
+<td>字符串的最大长度</td>
+</tr>
+<tr>
+<td><strong>Pattern</strong></td>
+<td>字符串正则模式</td>
+</tr>
+<tr>
+<td><strong>Minimum items</strong></td>
+<td>数组的最大长度</td>
+</tr>
+<tr>
+<td><strong>Maximum items</strong></td>
+<td>数组的最小长度</td>
+</tr>
+<tr>
+<td><strong>Unique</strong></td>
+<td>数组不允许有重复元素</td>
+</tr>
+<tr>
+<td><strong>Required</strong></td>
+<td>必填项目</td>
+</tr>
+<tr>
+<td><strong>Example</strong></td>
+<td>示例值</td>
+</tr>
+</tbody></table>
+<p>指定数组内部元素的格式，数组下标n从0开始：</p>
+<table>
+<thead>
+<tr>
+<th>Annotation</th>
+<th>Format</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Items.*n*.Maximum</strong></td>
+<td>specifies the maximum a number or integer value can have at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Minimum</strong></td>
+<td>specifies the minimum a number or integer value can have at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Multiple of</strong></td>
+<td>specifies a value a number or integer value must be a multiple of</td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Minimum length</strong></td>
+<td>the minimum length for a string value at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Maximum length</strong></td>
+<td>the maximum length for a string value at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Pattern</strong></td>
+<td>a regular expression a string value needs to match at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Minimum items</strong></td>
+<td>the minimum number of items a slice needs to have at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Maximum items</strong></td>
+<td>the maximum number of items a slice can have at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Unique</strong></td>
+<td>when set to true the slice can only contain unique items at the level <em>n</em></td>
+</tr>
+</tbody></table>
+<h3 id="swagger-response"><a href="#swagger-response" class="headerlink" title="swagger:response"></a>swagger:response</h3><p>swagger:response指定route所引用的响应体类型。</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">swagger:response [?response name]</span><br></pre></td></tr></table></figure>
+
+<p>swagger:response可使用的注解与swagger:parameters相同。</p>
+<p>示例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//// docs/user.go</span></span><br><span class="line"><span class="comment">// A UserLoginRespWrapper is a response when user login with correct password.</span></span><br><span class="line"><span class="comment">// swagger:response userLoginResponse</span></span><br><span class="line"><span class="keyword">type</span> UserLoginRespWrapper <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// in: body</span></span><br><span class="line">    Body api.UserLoginResp</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">////////another file////////////</span></span><br><span class="line"><span class="comment">// api/user_responses.go</span></span><br><span class="line"><span class="keyword">type</span> UserLoginResp <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// Required: true</span></span><br><span class="line">    <span class="comment">// Example: Login success</span></span><br><span class="line">    Msg <span class="keyword">string</span> <span class="string">`json:&quot;msg&quot;`</span></span><br><span class="line">    <span class="comment">// Required: true</span></span><br><span class="line">    <span class="comment">// Example: 200</span></span><br><span class="line">    Code <span class="keyword">int</span> <span class="string">`json:&quot;code&quot;`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，为了清晰和职责分离，需要将文档和代码分离开，大部分的注解需要写到docs模块，在文档模块定义Wrapper包装代码模块定义的结构体，这样能有效减少注解比代码还长的场景OTZ。</p>
+<p>定义好swagger:route、 swagger:parameters及swagger:response后的渲染结果：</p>
+<img data-src="/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922174004223.png" class="" title="image-20200922174004223">
+
+<h3 id="swagger-strfmt"><a href="#swagger-strfmt" class="headerlink" title="swagger:strfmt"></a>swagger:strfmt</h3><p><strong>swagger:strfmt</strong>可以定义结构化的字符串，如UUID，Email等等，支持的格式如下：</p>
+<ul>
+<li>uuid, uuid3, uuid4, uuid5</li>
+<li>email</li>
+<li>uri (absolute)</li>
+<li>hostname</li>
+<li>ipv4</li>
+<li>ipv6</li>
+<li>credit card</li>
+<li>isbn, isbn10, isbn13</li>
+<li>social security number</li>
+<li>hexcolor</li>
+<li>rgbcolor</li>
+<li>date</li>
+<li>date-time</li>
+<li>duration</li>
+<li>password</li>
+<li>custom string formats</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">swagger:strfmt [name]</span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//// api/user_parameters.go</span></span><br><span class="line"><span class="keyword">type</span> RegisterReq <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// Name stand for username</span></span><br><span class="line">    <span class="comment">// Maximum length    : 6</span></span><br><span class="line">    <span class="comment">// Required: true</span></span><br><span class="line">    <span class="comment">// example: lee</span></span><br><span class="line">    Name <span class="keyword">string</span> <span class="string">`json:&quot;name&quot; validate:&quot;required&quot;`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Password stand for user&#x27;s password</span></span><br><span class="line">    <span class="comment">// Maximum length    : 10</span></span><br><span class="line">    <span class="comment">// Required: true</span></span><br><span class="line">    <span class="comment">// example: 123456</span></span><br><span class="line">    Password <span class="keyword">string</span> <span class="string">`json:&quot;password&quot;`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Email stand for user&#x27;s email</span></span><br><span class="line">    <span class="comment">// Required: true</span></span><br><span class="line">    <span class="comment">// example: lee@uniontech.com</span></span><br><span class="line">    <span class="comment">// swagger:strfmt email</span></span><br><span class="line">    Email <span class="keyword">string</span> <span class="string">`json:&quot;email&quot;`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Age stand for user&#x27;s password</span></span><br><span class="line">    <span class="comment">// example: 20</span></span><br><span class="line">    Age <span class="keyword">int</span> <span class="string">`json:&quot;age&quot;`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="swagger-file"><a href="#swagger-file" class="headerlink" title="swagger:file"></a>swagger:file</h3><p>swagger:file注解用于指定某个参数为文件类型，如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//// docs/user.go</span></span><br><span class="line"><span class="comment">// A UploadReqWrapper is the form for upload a file.</span></span><br><span class="line"><span class="comment">// swagger:parameters upload</span></span><br><span class="line"><span class="keyword">type</span> UploadReqWrapper <span class="keyword">struct</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*Extra information describing the file</span></span><br><span class="line"><span class="comment">      In: formData</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    Description *<span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/*The file to upload</span></span><br><span class="line"><span class="comment">      In: formData</span></span><br><span class="line"><span class="comment">      swagger:file</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    File os.File</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>渲染效果：</p>
+<img data-src="/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922174503466.png" class="" title="image-20200922174503466">
+
+<h3 id="swagger-enum"><a href="#swagger-enum" class="headerlink" title="swagger:enum"></a>swagger:enum</h3><p>swagger:enum用于限定某个参数的选取范围，swagger UI渲染为下拉菜单，如：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//// docs/user.go</span></span><br><span class="line"><span class="comment">// A GetUsersReqWrapper is the query params for list users.</span></span><br><span class="line"><span class="comment">// swagger:parameters listUsers</span></span><br><span class="line"><span class="keyword">type</span> GetUsersReqWrapper <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">/*How many items want to fetch.</span></span><br><span class="line"><span class="comment">      In: query</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    Limit *<span class="keyword">int32</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/*The last id that was seen.</span></span><br><span class="line"><span class="comment">      In: query</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    Offset *<span class="keyword">int64</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/*the status to filter by</span></span><br><span class="line"><span class="comment">      Unique: true</span></span><br><span class="line"><span class="comment">      In: query</span></span><br><span class="line"><span class="comment">      Collection Format: pipes</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    Status []api.Status</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">////////another file////////////</span></span><br><span class="line"><span class="comment">// api/user_parameters.go</span></span><br><span class="line"><span class="comment">// swagger:enum Status</span></span><br><span class="line"><span class="keyword">type</span> Status <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">    STATUS_ACTIVE   Status = <span class="string">&quot;active&quot;</span></span><br><span class="line">    STATUS_DISABLED Status = <span class="string">&quot;disabled&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>渲染效果：</p>
+<img data-src="/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922174835908.png" class="" title="image-20200922174835908">
+
+
+
+<p>完整示例请查阅demo代码。</p>
+<h2 id="References"><a href="#References" class="headerlink" title="References:"></a>References:</h2><p><a target="_blank" rel="noopener" href="https://goswagger.io/use/spec.html">https://goswagger.io/use/spec.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://medium.com/@pedram.esmaeeli/generate-swagger-specification-from-go-source-code-648615f7b9d9">https://medium.com/@pedram.esmaeeli/generate-swagger-specification-from-go-source-code-648615f7b9d9</a></p>
+<p><a target="_blank" rel="noopener" href="https://juejin.im/post/6844903609390333965">https://juejin.im/post/6844903609390333965</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/golang/" rel="tag"><i class="fa fa-tag"></i> golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/09/17/Dive-into-Casbin/" rel="prev" title="Dive into Casbin">
+      <i class="fa fa-chevron-left"></i> Dive into Casbin
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+	
+  </article>
+  
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-number">1.</span> <span class="nav-text">安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E8%BF%9B%E5%88%B6%E5%AE%89%E8%A3%85"><span class="nav-number">1.1.</span> <span class="nav-text">二进制安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%BA%90%E7%A0%81%E5%AE%89%E8%A3%85"><span class="nav-number">1.2.</span> <span class="nav-text">源码安装</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#swagger-%E5%B7%A5%E5%85%B7%E4%BD%BF%E7%94%A8"><span class="nav-number">2.</span> <span class="nav-text">swagger 工具使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#generate-spec"><span class="nav-number">2.1.</span> <span class="nav-text">generate spec</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#swagger-serve"><span class="nav-number">2.2.</span> <span class="nav-text">swagger serve</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B9%E6%8D%AE%E6%B3%A8%E8%A7%A3%E8%87%AA%E5%8A%A8%E7%94%9F%E6%88%90spec"><span class="nav-number">3.</span> <span class="nav-text">根据注解自动生成spec</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#swagger-meta"><span class="nav-number">3.1.</span> <span class="nav-text">swagger:meta</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#swagger-route"><span class="nav-number">3.2.</span> <span class="nav-text">swagger:route</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#swagger-parameters"><span class="nav-number">3.3.</span> <span class="nav-text">swagger:parameters</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#swagger-response"><span class="nav-number">3.4.</span> <span class="nav-text">swagger:response</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#swagger-strfmt"><span class="nav-number">3.5.</span> <span class="nav-text">swagger:strfmt</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#swagger-file"><span class="nav-number">3.6.</span> <span class="nav-text">swagger:file</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#swagger-enum"><span class="nav-number">3.7.</span> <span class="nav-text">swagger:enum</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#References"><span class="nav-number">4.</span> <span class="nav-text">References:</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="pwli"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">pwli</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/yourname" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://weibo.com/yourname" title="Weibo → https:&#x2F;&#x2F;weibo.com&#x2F;yourname" rel="noopener" target="_blank"><i class="fab fa-weibo fa-fw"></i>Weibo</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+	      	  <div id="clound163music">
+	    <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=31460355&auto=1&height=66"></iframe>
+	  </div>
+
+  </aside>
+
+  <div id="sidebar-dimmer"></div>
+  
+
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">pwli</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="Symbols count total">61k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="Reading time total">55 mins.</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/lozad@1/dist/lozad.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+   
+
+  <script async src="/js/cursor/fireworks.js"></script>
+
+</body>
+</html>

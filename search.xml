@@ -743,4 +743,501 @@
         <tag>golang</tag>
       </tags>
   </entry>
+  <entry>
+    <title>go-swagger入门</title>
+    <url>/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/</url>
+    <content><![CDATA[<p>本文详细介绍go-swagger 通过注解生成swagger spec的使用。</p>
+<a id="more"></a>
+
+<p>相比<a href="https://github.com/swaggo/swag">Swag</a>，<a href="https://github.com/go-swagger/go-swagger">go-swagger</a>具有更强大和丰富的功能，go-swagger支持Design First和Code First两种模式，其中Design First是指先定义接口swagger.json，根据接口自动生成代码；Code First是指先编写代码和注解，再自动生成swagger.json文件。本文只介绍Code First模式的常规使用。</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h3 id="二进制安装"><a href="#二进制安装" class="headerlink" title="二进制安装"></a>二进制安装</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">download_url=$(curl -s https://api.github.com/repos/go-swagger/go-swagger/releases/latest | \</span><br><span class="line">  jq -r <span class="string">&#x27;.assets[] | select(.name | contains(&quot;&#x27;</span><span class="string">&quot;<span class="subst">$(uname | tr &#x27;[:upper:]&#x27; &#x27;[:lower:]&#x27;)</span>&quot;</span><span class="string">&#x27;_amd64&quot;)) | .browser_download_url&#x27;</span>)</span><br><span class="line">curl -o /usr/<span class="built_in">local</span>/bin/swagger -L<span class="string">&#x27;#&#x27;</span> <span class="string">&quot;<span class="variable">$download_url</span>&quot;</span></span><br><span class="line">chmod +x /usr/<span class="built_in">local</span>/bin/swagger</span><br></pre></td></tr></table></figure>
+
+<h3 id="源码安装"><a href="#源码安装" class="headerlink" title="源码安装"></a>源码安装</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">go install github.com/go-swagger/go-swagger/cmd/swagger</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="swagger-工具使用"><a href="#swagger-工具使用" class="headerlink" title="swagger 工具使用"></a>swagger 工具使用</h2><h3 id="generate-spec"><a href="#generate-spec" class="headerlink" title="generate spec"></a>generate spec</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ swagger generate spec -<span class="built_in">help</span></span><br><span class="line">Usage:</span><br><span class="line">  swagger [OPTIONS] generate spec [spec-OPTIONS]</span><br><span class="line"></span><br><span class="line">generate a swagger spec document from a go application</span><br><span class="line"></span><br><span class="line">Application Options:</span><br><span class="line">  -q, --quiet                  silence logs</span><br><span class="line">      --<span class="built_in">log</span>-output=LOG-FILE    redirect logs to file</span><br><span class="line"></span><br><span class="line">Help Options:</span><br><span class="line">  -h, --<span class="built_in">help</span>                   Show this <span class="built_in">help</span> message</span><br><span class="line"></span><br><span class="line">[spec <span class="built_in">command</span> options]</span><br><span class="line">      -w, --work-dir=          the base path to use (default: .) <span class="comment"># 指定工作目录，默认为当前目录</span></span><br><span class="line">      -t, --tags=              build tags</span><br><span class="line">      -m, --scan-models        includes models that were annotated with <span class="string">&#x27;swagger:model&#x27;</span></span><br><span class="line">          --compact            when present, doesn<span class="string">&#x27;t prettify the json # 压缩json缩进,不美化格式</span></span><br><span class="line"><span class="string">      -o, --output=            the file to write to  # 输出文件位置</span></span><br><span class="line"><span class="string">      -i, --input=             the file to use as input</span></span><br><span class="line"><span class="string">      -c, --include=           include packages matching pattern</span></span><br><span class="line"><span class="string">      -x, --exclude=           exclude packages matching pattern</span></span><br><span class="line"><span class="string">          --include-tag=       include routes having specified tags (can be specified many times)</span></span><br><span class="line"><span class="string">          --exclude-tag=       exclude routes having specified tags (can be specified many times)</span></span><br><span class="line"><span class="string">          --exclude-deps       exclude all dependencies of project</span></span><br></pre></td></tr></table></figure>
+
+<p>一般只需提前cd只main.go所在目录，然后执行<code> swagger generate spec -o swagger.json</code>即可。</p>
+<p>swagger会从main.go开始，借助golang的抽象语法树遍历我们的代码，找到格式匹配的注解并转换成相应的swagger spec。</p>
+<h3 id="swagger-serve"><a href="#swagger-serve" class="headerlink" title="swagger serve"></a>swagger serve</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ swagger serve -<span class="built_in">help</span></span><br><span class="line">Usage:</span><br><span class="line">  swagger [OPTIONS] serve [serve-OPTIONS]</span><br><span class="line"></span><br><span class="line">serve a spec and swagger or redoc documentation ui</span><br><span class="line"></span><br><span class="line">Application Options:</span><br><span class="line">  -q, --quiet                         silence logs</span><br><span class="line">      --<span class="built_in">log</span>-output=LOG-FILE           redirect logs to file</span><br><span class="line"></span><br><span class="line">Help Options:</span><br><span class="line">  -h, --<span class="built_in">help</span>                          Show this <span class="built_in">help</span> message</span><br><span class="line"></span><br><span class="line">[serve <span class="built_in">command</span> options]</span><br><span class="line">          --base-path=                the base path to serve the spec and UI at</span><br><span class="line">      -F, --flavor=[redoc|swagger]    the flavor of docs, can be swagger or redoc (default: redoc) <span class="comment"># 渲染风格，redoc和swagger两种</span></span><br><span class="line">          --doc-url=                  override the url <span class="built_in">which</span> takes a url query param to render the doc ui</span><br><span class="line">          --no-open                   when present won<span class="string">&#x27;t open the the browser to show the url</span></span><br><span class="line"><span class="string">          --no-ui                     when present, only the swagger spec will be served</span></span><br><span class="line"><span class="string">          --flatten                   when present, flatten the swagger spec before serving it</span></span><br><span class="line"><span class="string">      -p, --port=                     the port to serve this site [$PORT]</span></span><br><span class="line"><span class="string">          --host=                     the interface to serve this site, defaults to 0.0.0.0 [$HOST]</span></span><br><span class="line"><span class="string"></span></span><br></pre></td></tr></table></figure>
+
+<p>swagger serve 用于根据上一布生成的swagger.json，渲染出可用于交互的html页面。如：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ swagger serve ./swagger.json -F swagger</span><br><span class="line">2020/09/22 16:45:30 serving docs at http://localhost:33235/docs</span><br></pre></td></tr></table></figure>
+
+<img data-src="/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922164629425.png" class="" title="image-20200922164629425">
+
+
+
+<h2 id="根据注解自动生成spec"><a href="#根据注解自动生成spec" class="headerlink" title="根据注解自动生成spec"></a>根据注解自动生成spec</h2><p>下面我们来看一下go-swagger注解指定的格式及转换规则。</p>
+<h3 id="swagger-meta"><a href="#swagger-meta" class="headerlink" title="swagger:meta"></a>swagger:meta</h3><p>swagger:meta定义接口全局信息，主要有以下几个字段：</p>
+<table>
+<thead>
+<tr>
+<th>标记</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Terms Of Service</td>
+<td>描述使用接口服务的一些协议，比如免责等</td>
+</tr>
+<tr>
+<td>Consumes</td>
+<td>描述接口默认请求的mime类型值，如果有多个，每个类型占据一行。支持的MIME类型有json，yaml，xml，txt，bin，urlform，multipartform</td>
+</tr>
+<tr>
+<td>Produces</td>
+<td>描述接口默认响应的mime类型值，如果有多个，每个类型占据一行</td>
+</tr>
+<tr>
+<td>Schemes</td>
+<td>描述接口默认支持的协议类型，可能的值有http，https，ws，wss</td>
+</tr>
+<tr>
+<td>Version</td>
+<td>当前接口的版本</td>
+</tr>
+<tr>
+<td>Host</td>
+<td>接口服务所在的域名</td>
+</tr>
+<tr>
+<td>Base path</td>
+<td>接口默认的根路径</td>
+</tr>
+<tr>
+<td>Contact</td>
+<td>通常来说是接口文档编写者的联系方式，格式：John <a href="mailto:&#68;&#97;&#x6e;&#x6a;&#111;&#x68;&#110;&#46;&#100;&#97;&#x6e;&#x40;&#101;&#x78;&#x61;&#109;&#x70;&#108;&#x65;&#46;&#x63;&#111;&#109;">&#68;&#97;&#x6e;&#x6a;&#111;&#x68;&#110;&#46;&#100;&#97;&#x6e;&#x40;&#101;&#x78;&#x61;&#109;&#x70;&#108;&#x65;&#46;&#x63;&#111;&#109;</a></td>
+</tr>
+<tr>
+<td>License</td>
+<td>接口文档遵循的许可证名称</td>
+</tr>
+</tbody></table>
+<p>示例：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">//// docs/docs.go</span></span><br><span class="line"><span class="comment">// Package classification echo-swagger-demo API.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// the purpose of this application is to provide an application</span></span><br><span class="line"><span class="comment">// that is using plain go code to define an API</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// This should demonstrate all the possible comment annotations</span></span><br><span class="line"><span class="comment">// that are available to turn go code into a fully compliant swagger 2.0 spec</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// Terms Of Service:</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// there are no TOS at this moment, use at your own risk we take no responsibility</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Schemes: http</span></span><br><span class="line"><span class="comment">//     Host: 10.7.11.134:1323</span></span><br><span class="line"><span class="comment">//     BasePath: /v2</span></span><br><span class="line"><span class="comment">//     Version: 0.0.1</span></span><br><span class="line"><span class="comment">//     License: MIT http://opensource.org/licenses/MIT</span></span><br><span class="line"><span class="comment">//     Contact: John Doe&lt;john.doe@example.com&gt; http://john.doe.com</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Consumes:</span></span><br><span class="line"><span class="comment">//     - application/json</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Produces:</span></span><br><span class="line"><span class="comment">//     - application/json</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Security:</span></span><br><span class="line"><span class="comment">//     - api_key:</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     SecurityDefinitions:</span></span><br><span class="line"><span class="comment">//     api_key:</span></span><br><span class="line"><span class="comment">//          type: apiKey</span></span><br><span class="line"><span class="comment">//          name: KEY</span></span><br><span class="line"><span class="comment">//          in: header</span></span><br><span class="line"><span class="comment">//     oauth2:</span></span><br><span class="line"><span class="comment">//         type: oauth2</span></span><br><span class="line"><span class="comment">//         authorizationUrl: /oauth2/auth</span></span><br><span class="line"><span class="comment">//         tokenUrl: /oauth2/token</span></span><br><span class="line"><span class="comment">//         in: header</span></span><br><span class="line"><span class="comment">//         scopes:</span></span><br><span class="line"><span class="comment">//           bar: foo</span></span><br><span class="line"><span class="comment">//         flow: accessCode</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Extensions:</span></span><br><span class="line"><span class="comment">//     x-meta-value: value</span></span><br><span class="line"><span class="comment">//     x-meta-array:</span></span><br><span class="line"><span class="comment">//       - value1</span></span><br><span class="line"><span class="comment">//       - value2</span></span><br><span class="line"><span class="comment">//     x-meta-array-obj:</span></span><br><span class="line"><span class="comment">//       - name: obj</span></span><br><span class="line"><span class="comment">//         value: field</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// swagger:meta</span></span><br></pre></td></tr></table></figure>
+
+<p>生成后的spec的渲染效果：</p>
+<img data-src="/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922165513541.png" class="" title="image-20200922165513541">
+
+<h3 id="swagger-route"><a href="#swagger-route" class="headerlink" title="swagger:route"></a>swagger:route</h3><p>swagger:route 指定路由注解，格式如下：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">swagger:route [method] [path pattern] [?tag1 tag2 tag3] [operation id]</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<ul>
+<li>method为HTTP请求方式</li>
+<li>path pattern为请求url（去掉Base path前缀）</li>
+<li>tag代表该接口归属的模块，一个路由指定多个tag，swagger UI 可以根据tag分组</li>
+<li>operation id为该路由的唯一标识，供swagger:parameters使用</li>
+</ul>
+<p>swagger:route一行结束后一般会紧跟两行注释，表明该接口的用途，其中第一行为接口概要信息，以”.”结束；第二行为详细描述。最后Responses指定可能的响应头状态码及响应体名称，响应体名称与swagger:response对应。</p>
+<p>示例：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">//// docs/user.go</span></span><br><span class="line"><span class="comment">// swagger:route POST /login users login</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// check user&#x27;s password and login.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// 用户登录接口blablabla</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">//     Responses:</span></span><br><span class="line"><span class="comment">//       default: genericError</span></span><br><span class="line"><span class="comment">//       200: userLoginResponse</span></span><br><span class="line"><span class="comment">//       422: validationError</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="swagger-parameters"><a href="#swagger-parameters" class="headerlink" title="swagger:parameters"></a>swagger:parameters</h3><p>swagger:parameters指定请求参数的类型，格式如下：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">swagger:parameters [operationid1 operationid2]</span><br></pre></td></tr></table></figure>
+
+<p>operationid用于指定该参数可用于哪些route，可指定多个。</p>
+<p>示例：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">//// docs/user.go</span></span><br><span class="line"><span class="comment">// swagger:parameters login</span></span><br><span class="line"><span class="keyword">type</span> UserLoginReqWrapper <span class="keyword">struct</span> &#123;</span><br><span class="line">   <span class="comment">// 用户登录认证需要用户名和密码</span></span><br><span class="line">   <span class="comment">// in: body</span></span><br><span class="line">   Body api.UserLoginReq</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">////////another file////////////</span></span><br><span class="line"><span class="comment">// api/user_parameters.go</span></span><br><span class="line"><span class="keyword">type</span> UserLoginReq <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// Name stand for username</span></span><br><span class="line">    <span class="comment">// Maximum length    : 3</span></span><br><span class="line">    <span class="comment">// example: lee</span></span><br><span class="line">    Name <span class="keyword">string</span> <span class="string">`json:&quot;name&quot;`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Password stand for user&#x27;s password</span></span><br><span class="line">    <span class="comment">// Maximum length    : 10</span></span><br><span class="line">    <span class="comment">// example: 123</span></span><br><span class="line">    Password <span class="keyword">string</span> <span class="string">`json:&quot;password&quot;`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>swagger:parameters可使用以下注解：</p>
+<table>
+<thead>
+<tr>
+<th>Annotation</th>
+<th>Format</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>In</strong></td>
+<td>参数位置：header、formData、path、query、body</td>
+</tr>
+<tr>
+<td><strong>Collection Format</strong></td>
+<td>when a slice the formatter for the collection when serialized on the request</td>
+</tr>
+<tr>
+<td><strong>Maximum</strong></td>
+<td>整数的最大值</td>
+</tr>
+<tr>
+<td><strong>Minimum</strong></td>
+<td>整数的最小值</td>
+</tr>
+<tr>
+<td><strong>Multiple of</strong></td>
+<td>倍数</td>
+</tr>
+<tr>
+<td><strong>Minimum length</strong></td>
+<td>字符串的最小长度</td>
+</tr>
+<tr>
+<td><strong>Maximum length</strong></td>
+<td>字符串的最大长度</td>
+</tr>
+<tr>
+<td><strong>Pattern</strong></td>
+<td>字符串正则模式</td>
+</tr>
+<tr>
+<td><strong>Minimum items</strong></td>
+<td>数组的最大长度</td>
+</tr>
+<tr>
+<td><strong>Maximum items</strong></td>
+<td>数组的最小长度</td>
+</tr>
+<tr>
+<td><strong>Unique</strong></td>
+<td>数组不允许有重复元素</td>
+</tr>
+<tr>
+<td><strong>Required</strong></td>
+<td>必填项目</td>
+</tr>
+<tr>
+<td><strong>Example</strong></td>
+<td>示例值</td>
+</tr>
+</tbody></table>
+<p>指定数组内部元素的格式，数组下标n从0开始：</p>
+<table>
+<thead>
+<tr>
+<th>Annotation</th>
+<th>Format</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Items.*n*.Maximum</strong></td>
+<td>specifies the maximum a number or integer value can have at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Minimum</strong></td>
+<td>specifies the minimum a number or integer value can have at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Multiple of</strong></td>
+<td>specifies a value a number or integer value must be a multiple of</td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Minimum length</strong></td>
+<td>the minimum length for a string value at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Maximum length</strong></td>
+<td>the maximum length for a string value at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Pattern</strong></td>
+<td>a regular expression a string value needs to match at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Minimum items</strong></td>
+<td>the minimum number of items a slice needs to have at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Maximum items</strong></td>
+<td>the maximum number of items a slice can have at the level <em>n</em></td>
+</tr>
+<tr>
+<td><strong>Items.*n*.Unique</strong></td>
+<td>when set to true the slice can only contain unique items at the level <em>n</em></td>
+</tr>
+</tbody></table>
+<h3 id="swagger-response"><a href="#swagger-response" class="headerlink" title="swagger:response"></a>swagger:response</h3><p>swagger:response指定route所引用的响应体类型。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">swagger:response [?response name]</span><br></pre></td></tr></table></figure>
+
+<p>swagger:response可使用的注解与swagger:parameters相同。</p>
+<p>示例：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">//// docs/user.go</span></span><br><span class="line"><span class="comment">// A UserLoginRespWrapper is a response when user login with correct password.</span></span><br><span class="line"><span class="comment">// swagger:response userLoginResponse</span></span><br><span class="line"><span class="keyword">type</span> UserLoginRespWrapper <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// in: body</span></span><br><span class="line">    Body api.UserLoginResp</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">////////another file////////////</span></span><br><span class="line"><span class="comment">// api/user_responses.go</span></span><br><span class="line"><span class="keyword">type</span> UserLoginResp <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// Required: true</span></span><br><span class="line">    <span class="comment">// Example: Login success</span></span><br><span class="line">    Msg <span class="keyword">string</span> <span class="string">`json:&quot;msg&quot;`</span></span><br><span class="line">    <span class="comment">// Required: true</span></span><br><span class="line">    <span class="comment">// Example: 200</span></span><br><span class="line">    Code <span class="keyword">int</span> <span class="string">`json:&quot;code&quot;`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，为了清晰和职责分离，需要将文档和代码分离开，大部分的注解需要写到docs模块，在文档模块定义Wrapper包装代码模块定义的结构体，这样能有效减少注解比代码还长的场景OTZ。</p>
+<p>定义好swagger:route、 swagger:parameters及swagger:response后的渲染结果：</p>
+<img data-src="/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922174004223.png" class="" title="image-20200922174004223">
+
+<h3 id="swagger-strfmt"><a href="#swagger-strfmt" class="headerlink" title="swagger:strfmt"></a>swagger:strfmt</h3><p><strong>swagger:strfmt</strong>可以定义结构化的字符串，如UUID，Email等等，支持的格式如下：</p>
+<ul>
+<li>uuid, uuid3, uuid4, uuid5</li>
+<li>email</li>
+<li>uri (absolute)</li>
+<li>hostname</li>
+<li>ipv4</li>
+<li>ipv6</li>
+<li>credit card</li>
+<li>isbn, isbn10, isbn13</li>
+<li>social security number</li>
+<li>hexcolor</li>
+<li>rgbcolor</li>
+<li>date</li>
+<li>date-time</li>
+<li>duration</li>
+<li>password</li>
+<li>custom string formats</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">swagger:strfmt [name]</span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">//// api/user_parameters.go</span></span><br><span class="line"><span class="keyword">type</span> RegisterReq <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">// Name stand for username</span></span><br><span class="line">    <span class="comment">// Maximum length    : 6</span></span><br><span class="line">    <span class="comment">// Required: true</span></span><br><span class="line">    <span class="comment">// example: lee</span></span><br><span class="line">    Name <span class="keyword">string</span> <span class="string">`json:&quot;name&quot; validate:&quot;required&quot;`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Password stand for user&#x27;s password</span></span><br><span class="line">    <span class="comment">// Maximum length    : 10</span></span><br><span class="line">    <span class="comment">// Required: true</span></span><br><span class="line">    <span class="comment">// example: 123456</span></span><br><span class="line">    Password <span class="keyword">string</span> <span class="string">`json:&quot;password&quot;`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Email stand for user&#x27;s email</span></span><br><span class="line">    <span class="comment">// Required: true</span></span><br><span class="line">    <span class="comment">// example: lee@uniontech.com</span></span><br><span class="line">    <span class="comment">// swagger:strfmt email</span></span><br><span class="line">    Email <span class="keyword">string</span> <span class="string">`json:&quot;email&quot;`</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Age stand for user&#x27;s password</span></span><br><span class="line">    <span class="comment">// example: 20</span></span><br><span class="line">    Age <span class="keyword">int</span> <span class="string">`json:&quot;age&quot;`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="swagger-file"><a href="#swagger-file" class="headerlink" title="swagger:file"></a>swagger:file</h3><p>swagger:file注解用于指定某个参数为文件类型，如：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">//// docs/user.go</span></span><br><span class="line"><span class="comment">// A UploadReqWrapper is the form for upload a file.</span></span><br><span class="line"><span class="comment">// swagger:parameters upload</span></span><br><span class="line"><span class="keyword">type</span> UploadReqWrapper <span class="keyword">struct</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*Extra information describing the file</span></span><br><span class="line"><span class="comment">      In: formData</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    Description *<span class="keyword">string</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/*The file to upload</span></span><br><span class="line"><span class="comment">      In: formData</span></span><br><span class="line"><span class="comment">      swagger:file</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    File os.File</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>渲染效果：</p>
+<img data-src="/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922174503466.png" class="" title="image-20200922174503466">
+
+<h3 id="swagger-enum"><a href="#swagger-enum" class="headerlink" title="swagger:enum"></a>swagger:enum</h3><p>swagger:enum用于限定某个参数的选取范围，swagger UI渲染为下拉菜单，如：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">//// docs/user.go</span></span><br><span class="line"><span class="comment">// A GetUsersReqWrapper is the query params for list users.</span></span><br><span class="line"><span class="comment">// swagger:parameters listUsers</span></span><br><span class="line"><span class="keyword">type</span> GetUsersReqWrapper <span class="keyword">struct</span> &#123;</span><br><span class="line">    <span class="comment">/*How many items want to fetch.</span></span><br><span class="line"><span class="comment">      In: query</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    Limit *<span class="keyword">int32</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/*The last id that was seen.</span></span><br><span class="line"><span class="comment">      In: query</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    Offset *<span class="keyword">int64</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/*the status to filter by</span></span><br><span class="line"><span class="comment">      Unique: true</span></span><br><span class="line"><span class="comment">      In: query</span></span><br><span class="line"><span class="comment">      Collection Format: pipes</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    Status []api.Status</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">////////another file////////////</span></span><br><span class="line"><span class="comment">// api/user_parameters.go</span></span><br><span class="line"><span class="comment">// swagger:enum Status</span></span><br><span class="line"><span class="keyword">type</span> Status <span class="keyword">string</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">    STATUS_ACTIVE   Status = <span class="string">&quot;active&quot;</span></span><br><span class="line">    STATUS_DISABLED Status = <span class="string">&quot;disabled&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>渲染效果：</p>
+<img data-src="/2020/09/22/go-swagger%E5%85%A5%E9%97%A8/image-20200922174835908.png" class="" title="image-20200922174835908">
+
+
+
+<p>完整示例请查阅demo代码。</p>
+<h2 id="References"><a href="#References" class="headerlink" title="References:"></a>References:</h2><p><a href="https://goswagger.io/use/spec.html">https://goswagger.io/use/spec.html</a></p>
+<p><a href="https://medium.com/@pedram.esmaeeli/generate-swagger-specification-from-go-source-code-648615f7b9d9">https://medium.com/@pedram.esmaeeli/generate-swagger-specification-from-go-source-code-648615f7b9d9</a></p>
+<p><a href="https://juejin.im/post/6844903609390333965">https://juejin.im/post/6844903609390333965</a></p>
+]]></content>
+      <categories>
+        <category>golang</category>
+      </categories>
+      <tags>
+        <tag>golang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Dive into Casbin</title>
+    <url>/2020/09/17/Dive-into-Casbin/</url>
+    <content><![CDATA[<p>本文详细介绍Casbin的PERM模型，常用的访问控制模型及casbin（golang）的使用。</p>
+<a id="more"></a>
+
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>近年来，越来越多的企业向云平台迁移，云计算已经成为企业减少开销、按需分配计算资源的重要手段；但是当前各大云厂商存在多种不同的访问控制机制、策略语言，使得用户在做迁移时不得不投入大量人力。</p>
+<p>Casbin是一个强大的、高效的开源访问控制框架，其权限管理机制支持多种访问控制模型。旨在提供<strong>策略语言无关性</strong>、<strong>访问控制模型无关性</strong>和<strong>程序设计语言无关性</strong>的权限管理框架。通过抽象出PERM模型，在业务需要更换访问控制模型时，只需重新配置PERM模型，并不需要对业务代码进行大幅改动。</p>
+<h2 id="PML语言"><a href="#PML语言" class="headerlink" title="PML语言"></a>PML语言</h2><p>什么是PML及PERM？</p>
+<p>PERM建模语言(PERM modeling language， 简称PML)来表达访问控制模型及其策略规则，PML语言是一个元模型语言， 其基于PERM(policy-effect-request-matcher)元模型。PERM元模型如下图所示， 包含4个基本原语：Request、Policy、Effect、Matcher， 1个可选原语：Role以及若干特性， 如域、属性、桩函数等。</p>
+
+
+<h3 id="Request原语"><a href="#Request原语" class="headerlink" title="Request原语"></a>Request原语</h3><p>Request原语是对访问请求的抽象，其定义了访问请求的语义。一个访问请求通常由经典的三元组构成：进行访问的主体(subject)、被访问的客体(object)、访问动作(action)。PML中描述上述三元组的Request原语可表示为：</p>
+<p><strong><em>r = sub, obj, act</em></strong></p>
+<p>PML提供了自定制Request原语的能力，例如如果不需要控制到具体的资源，可以采用sub， act两元组的格式。如果主体需要采用所属域等额外信息来标识的话，可以采用domain， sub， obj， act四元组作为Request原语声明。如果使用ABAC则可以自行扩展请求格式（见代码demo）。</p>
+<h3 id="Policy原语"><a href="#Policy原语" class="headerlink" title="Policy原语"></a>Policy原语</h3><p>Policy原语定义了策略规则的语义。该字段制定了PML策略的解释器应如何解释策略规则。为简单起见，本文采用逗号分隔值(comma-separated values， CSV)来作为策略规则的语法。与Request原语类似，经典的Policy原语也由主体、客体、动作三元组构成：</p>
+<p><strong><em>p = sub, obj, act</em></strong></p>
+<p>与其相应的策略规则可以为：</p>
+<p><strong><em>p, alice, data1, read</em></strong></p>
+<p>策略中的每一行都是一条策略规则。策略规则的第一个元素是策略类型，该字段与Policy原语相对应，通过指定不同的策略类型可以支持多个Policy原语，如p， p2等。通常情况下，不需要指定多个策略类型。上面的策略规则与之前的经典Policy原语的绑定关系为：</p>
+<p><strong><em>(alice, data1, read) → (p.sub, p.obj, p.act)</em></strong></p>
+<p>上述绑定类似于变量赋值，可以在Matcher原语中使用。</p>
+<h3 id="Matcher原语"><a href="#Matcher原语" class="headerlink" title="Matcher原语"></a>Matcher原语</h3><p>Matcher原语定义了策略规则如何与访问请求进行匹配的匹配器，其本质上是布尔表达式。可以理解为Request、Policy等原语定义了关于策略和请求的变量，然后将这些变量代入Matcher原语中求值，从而进行策略决策。Matcher原语支持+， -， *， /等算数运算符、==， !=， &gt;， &lt;等关系运算符以及&amp;&amp; (与)， || (或)， ! (非)等逻辑运算符。Matcher原语最终的运算结果应为布尔值0或1，1表示策略规则满足该匹配器，0则表示不满足。与上节中列举的经典Policy原语相对应的Matcher原语为：</p>
+<p><strong><em>m = r.sub == p.sub &amp;&amp; r.obj == p.obj &amp;&amp; r.act == p.act</em></strong></p>
+<p>该Matcher原语表示，访问请求中的主体、客体、动作三元组应与策略规则中的主体、客体、动作三元组分别对应相同。</p>
+<h3 id="Effect原语"><a href="#Effect原语" class="headerlink" title="Effect原语"></a>Effect原语</h3><p>Effect原语定义了当多个策略规则同时匹配访问请求时，该如何对多个决策结果进行集成以实现统一决策，决策结果包括allow和deny两种。Effect原语支持some， any等量词以及条件关键字where、&amp;&amp; (与)， || (或)， ! (非)等逻辑运算符。some量词判断是否存在一条策略规则满足匹配器，any量词则判断是否所有的策略规则都满足匹配器。Where关键字表示后面跟策略规则的筛选条件。Effect原语可以表达<strong>允许优先</strong>(allow-override)、<strong>拒绝优先</strong>(deny-override)等多种决策集成方法。允许优先可以表达为：</p>
+<p><strong><em>e = some(where (p.eft == allow))</em></strong></p>
+<p>该Effect原语表示如果存在任意一个决策结果为allow的匹配规则，则最终决策结果为allow，即allow-override。其中p.eft表示策略规则的决策结果，可以为allow或者deny。当不指定规则的决策结果时，取默认值allow。利用Effect原语还可以表达拒绝优先：</p>
+<p><strong><em>e = !some(where (p.eft == deny))</em></strong></p>
+<p>该Effect原语表示不存在任何决策结果为deny的匹配规则，则最终决策结果为allow，否则为deny。Effect原语还可以利用逻辑运算符进行连接：</p>
+<p><strong><em>e = some(where (p.eft == allow)) &amp;&amp; !some(where (p.eft == deny))</em></strong></p>
+<p>该Effect原语表示当至少存在一个决策结果为allow的匹配规则，且不存在决策结果为deny的匹配规则时，则最终决策结果为allow。这时正向授权和负向授权同时存在，并且拒绝优先。</p>
+<h3 id="Role原语"><a href="#Role原语" class="headerlink" title="Role原语"></a>Role原语</h3><p>Role原语定义了RBAC中的角色继承关系。该原语的特点是支持多重RBAC体系的表达。如当主体和客体同时具有角色(或组)的概念时，主体角色和客体角色两套RBAC体系可以互不干扰。同时支持主体角色和客体角色的Role原语可以定义如下：</p>
+<p><strong><em>g = _, _</em></strong></p>
+<p><strong><em>g2 = _, _</em></strong></p>
+<p>上述Role原语表示g是一个RBAC体系，g2是另一个RBAC体系。_， _表示角色继承关系的前项和后项，即前项继承后项角色的权限。PML把角色继承关系也表达为策略规则，如：</p>
+<p><strong><em>g, alice, data2_admin</em></strong></p>
+<p>上述策略规则表示alice具有角色data2_admin。这里的alice可以为具体的某个主体或者另一个角色。g则表示策略类型，与Role原语相对应。在Matcher原语中，请求主体与策略规则主体之间的是否具有角色继承关系可以用布尔函数g(r.sub, p.sub)来表达，值为1表示两者具有角色继承关系，0则表示不具备该关系。角色继承关系支持间接继承。可以看出，<strong>Matcher原语中的一个布尔函数g，与Role原语中的g和策略规则中相应的策略类型g互相对应，共同完成RBAC角色的指派。</strong>其他RBAC体系，如g2用法类似，这里不再赘述。下面例子给出完整的Matcher原语：</p>
+<p><strong><em>m = g(r.sub， p.sub) &amp;&amp; r.obj == p.obj &amp;&amp; r.act == p.act</em></strong></p>
+<p>该Matcher原语表达了经典的RBAC场景：策略规则定义哪些角色可以具备哪些权限(即采用哪种动作访问哪个资源)，只有当请求主体继承策略规则中指定的角色，并且请求与策略规则中的资源和动作对应相同时，Matcher原语才会成功匹配该请求与该策略规则。</p>
+<h3 id="域"><a href="#域" class="headerlink" title="域"></a>域</h3><p>云平台中通常存在租户的概念。为了实现灵活的授权管理，PML通过域内Role原语来支持租户内的授权。<strong>一个域代表一个租户，域内角色只在本域内生效，也只能分配本域内的资源的权限。</strong>域内角色机制实现了云平台租户间的安全隔离。域内Role原语可以定义为：</p>
+<p><strong><em>g = _, _, _</em></strong></p>
+<p>原语中第三个_表示域的概念。相对应的策略规则的实例如下：</p>
+<p><strong><em>p, admin, tenant1, data1, read</em></strong></p>
+<p><strong><em>p, admin, tenant2, data2, read</em></strong></p>
+<p><strong><em>g, alice, admin, tenant1</em></strong></p>
+<p><strong><em>g, alice, user, tenant2</em></strong></p>
+<p>相对应的Matcher原语可以为：</p>
+<p><strong><em>m = g(r.sub, p.sub, r.dom) &amp;&amp; r.dom == p.dom &amp;&amp; r.obj == p.obj &amp;&amp; r.act == p.act</em></strong></p>
+<p>该实例表示tenant1的域内角色admin可以读取data1，tenant2的域内角色admin可以读取data2。Alice是在tenant1域中是admin角色，但在tenant2域中是user角色，因此根据策略规则，alice只能读取data1而不能读取data2。</p>
+<h3 id="属性"><a href="#属性" class="headerlink" title="属性"></a>属性</h3><p>为了支持ABAC的属性概念，PML采用.(点)语法来表达元素属性(元素即主体、客体、动作等)。属性本身也是元素，因此可以继续获取属性的属性。例如，r.sub.domain表示访问请求的主体所在的域，而r.sub.domain.owner则表示该域的所有者。</p>
+<p><strong><em>m = r.sub.domain == r.obj.domain</em></strong></p>
+<p>上述Matcher原语表示只有当请求的主体所在的域与请求的客体所在的域相同时，才允许该请求。PML本身也依赖与属性类似的语法。如r.sub可理解为请求r这个元素的sub属性。通过提供一致的语法，有助于降低策略编写者学习语言的成本。</p>
+<h3 id="桩函数"><a href="#桩函数" class="headerlink" title="桩函数"></a>桩函数</h3><p>虽然PML的Matcher原语通过各种运算符提供了强大的表达能力，仍然有一些复杂的处理逻辑无法用PML表达，如查询外部数据库、进行复杂数学运算等。PML中提供了桩函数机制以满足自定义处理逻辑的需求。策略编写者可以在PML以外以其他程序设计语言自定义若干桩函数(stub function)，然后将这些函数注册到PML中，从而被PML的Matcher原语所识别和调用。桩函数与普通函数类似，可以带有多个参数，并具有返回值。下面给出桩函数my_func的例子。my_func判断请求客体与策略规则客体之间是否匹配，并返回布尔值。首先需要将该函数进行注册：</p>
+<p><strong><em>register_function(“my_func”,  my_func)</em></strong></p>
+<p>my_func的实现可以如下：</p>
+<p><strong><em>boolean my_func(r.obj, p.obj) {</em></strong></p>
+<p><strong><em>return r.obj == p.obj</em></strong></p>
+<p><strong><em>}</em></strong></p>
+<p>这样就可以在Matcher原语中指定该函数，参与到匹配中：</p>
+<p><strong><em>m = r.sub == p.sub &amp;&amp; my_func(r.obj, p.obj) &amp;&amp; r.act == p.act</em></strong></p>
+<p>PML提供内置的桩函数，以满足常用Matcher匹配需求。如keyMatch(r.obj， p.obj)函数支持匹配RESTful路径，当请求中的RESTful路径匹配策略规则时返回布尔值1，并允许以“*”作为通配符。regexMatch(r.obj, p.obj)函数则提供了更强大的正则表达式匹配的功能，当请求中的客体匹配策略规则中指定的正则表达式时返回布尔值。</p>
+<h2 id="访问控制模型"><a href="#访问控制模型" class="headerlink" title="访问控制模型"></a>访问控制模型</h2><p>ACL、RBAC、ABAC</p>
+<h3 id="ACL"><a href="#ACL" class="headerlink" title="ACL"></a>ACL</h3><p><code>ACL</code>是<code>Access Control List</code>的缩写，称为访问控制列表. 定义了谁可以对某个数据进行何种操作。</p>
+<p>ACL规则十分简单, 但当用户数或资源的数量较大时, 维护成本较高。</p>
+<p><strong>典型应用</strong></p>
+<ul>
+<li>文件系统</li>
+</ul>
+<p>文件系统的文件或文件夹定义某个账号(user)或某个群组(group)对文件(夹)的读(read)/写(write)/执行(execute)权限.</p>
+<ul>
+<li>网络访问</li>
+</ul>
+<p>服务器限制不允许指定机器访问其指定端口, 或允许特定指定服务器访问其指定几个端口。</p>
+<p>示例：</p>
+<figure class="highlight ini"><table><tr><td class="code"><pre><span class="line"><span class="comment"># acl_model.conf</span></span><br><span class="line"><span class="section">[request_definition]</span></span><br><span class="line"><span class="attr">r</span> = sub, obj, act</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_definition]</span></span><br><span class="line"><span class="attr">p</span> = sub, obj, act</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_effect]</span></span><br><span class="line"><span class="attr">e</span> = some(where (p.eft == allow))</span><br><span class="line"></span><br><span class="line"><span class="section">[matchers]</span></span><br><span class="line"><span class="attr">m</span> = r.sub == p.sub &amp;&amp; r.obj == p.obj &amp;&amp; r.act == p.act</span><br></pre></td></tr></table></figure>
+
+<p><strong>model.conf文件解析</strong>：</p>
+<ul>
+<li>request_definition块对应Request原语</li>
+<li>policy_definition块对应Policy原语</li>
+<li>matchers块对应Matcher原语</li>
+<li>policy_effect块对应Effect原语</li>
+</ul>
+<p>Policy文件内容承载了具体的权限规则数据：</p>
+<figure class="highlight"><table><tr><td class="code"><pre><span class="line"><span class="comment"># acl_policy.csv</span></span><br><span class="line">p, alice, data1, read</span><br><span class="line">p, bob, data2, write</span><br></pre></td></tr></table></figure>
+
+<p>测试代码：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">testEnforce</span><span class="params">(e *casbin.Enforcer, sub <span class="keyword">interface</span>&#123;&#125;, obj <span class="keyword">interface</span>&#123;&#125;, act <span class="keyword">string</span>, res <span class="keyword">bool</span>)</span></span> &#123;</span><br><span class="line">    <span class="comment">// 若与预期不符，打印错误信息</span></span><br><span class="line">    <span class="keyword">if</span> ok, _ := e.Enforce(sub, obj, act); ok != res &#123;</span><br><span class="line">        fmt.Printf(<span class="string">&quot;%s, %v, %s: %t, supposed to be %t\n&quot;</span>, sub, obj, act, !res, res)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestACL</span><span class="params">()</span></span> &#123;</span><br><span class="line">    e, _ := newEnforcer(<span class="string">&quot;acl_model.conf&quot;</span>, <span class="string">&quot;acl_policy.csv&quot;</span>)</span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">true</span>) <span class="comment">// alice 只对data1有读权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforce(e, <span class="string">&quot;bob&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforce(e, <span class="string">&quot;bob&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// bob 只对data2有写权限</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="RBAC"><a href="#RBAC" class="headerlink" title="RBAC"></a>RBAC</h3><p><code>RBAC</code>是<code>Role-based access control</code>的缩写，称为 基于角色的访问控制。核心数据模型有：用户、 角色、 权限。用户具有角色， 而角色具有权限,，从而表达用户具有权限。由于有角色作为中间纽带, 当新增用户时, 只需要为用户赋予角色，用户即获得角色所包含的所有权限。RBAC解决了ACL在用户或资源数量庞大时维护困难的问题。</p>
+<h4 id="普通RBAC"><a href="#普通RBAC" class="headerlink" title="普通RBAC"></a>普通RBAC</h4><figure class="highlight ini"><table><tr><td class="code"><pre><span class="line"><span class="comment"># rbac_model.conf</span></span><br><span class="line"><span class="section">[request_definition]</span></span><br><span class="line"><span class="attr">r</span> = sub, obj, act</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_definition]</span></span><br><span class="line"><span class="attr">p</span> = sub, obj, act</span><br><span class="line"></span><br><span class="line"><span class="section">[role_definition]</span></span><br><span class="line"><span class="attr">g</span> = _, _</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_effect]</span></span><br><span class="line"><span class="attr">e</span> = some(where (p.eft == allow))</span><br><span class="line"></span><br><span class="line"><span class="section">[matchers]</span></span><br><span class="line"><span class="attr">m</span> = g(r.sub, p.sub) &amp;&amp; r.obj == p.obj &amp;&amp; r.act == p.act</span><br></pre></td></tr></table></figure>
+
+<p>role_definition块为RBAC模型独有的配置区，<code>g = _,_</code>定义了用户——角色或者角色——角色的映射关系，前者是后者的成员，拥有后者的权限。匹配器中的<code>g(r.sub, p.sub)</code>用于判段<code>r.sub</code>是否属于<code>p.sub</code>这个角色。</p>
+<figure class="highlight"><table><tr><td class="code"><pre><span class="line"><span class="comment"># rbac_policy.csv</span></span><br><span class="line">p, alice, data1, read</span><br><span class="line">p, bob, data2, write</span><br><span class="line"><span class="comment"># ata2_admin对data2有读写权限</span></span><br><span class="line">p, data2_admin, data2, read  </span><br><span class="line">p, data2_admin, data2, write</span><br><span class="line"></span><br><span class="line"><span class="comment"># alice 在data2_admin组</span></span><br><span class="line">g, alice, data2_admin </span><br></pre></td></tr></table></figure>
+
+
+
+<p>测试代码：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestRBAC</span><span class="params">()</span></span> &#123;</span><br><span class="line">    e, _ := newEnforcer(<span class="string">&quot;rbac_model.conf&quot;</span>, <span class="string">&quot;rbac_policy.csv&quot;</span>)</span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">true</span>)  <span class="comment">// alice 只对data1有读权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">true</span>)  <span class="comment">// alice 在data2_admin组，data2_admin对data2有读写权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// alice 在data2_admin组，data2_admin对data2有读写权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;bob&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforce(e, <span class="string">&quot;bob&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// bob 只对data2有写权限</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="多级RBAC"><a href="#多级RBAC" class="headerlink" title="多级RBAC"></a>多级RBAC</h4><p><code>casbin</code>还能为角色定义所属角色，从而实现多级角色关系，这种权限关系是可以传递的。</p>
+<p>继续使用上一部的权限模型rbac_model.conf，新建policy文件如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># rbac_with_hierarchy_policy.csv</span><br><span class="line">p, alice, data1, read</span><br><span class="line">p, bob, data2, write</span><br><span class="line">p, data1_admin, data1, read</span><br><span class="line">p, data1_admin, data1, write</span><br><span class="line">p, data2_admin, data2, read</span><br><span class="line">p, data2_admin, data2, write</span><br><span class="line"></span><br><span class="line">g, alice, admin</span><br><span class="line">g, admin, data1_admin</span><br><span class="line">g, admin, data2_admin</span><br></pre></td></tr></table></figure>
+
+<p>alice 通过admin，继承了data1_admin和data2_admin的权限。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestRBACWithHierarchy</span><span class="params">()</span></span> &#123;</span><br><span class="line">    e, _ := newEnforcer(<span class="string">&quot;rbac_model.conf&quot;</span>, <span class="string">&quot;rbac_with_hierarchy_policy.csv&quot;</span>)</span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">true</span>)  <span class="comment">// alice 对data1有读权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// alice 对data1有写权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">true</span>)  <span class="comment">// alice 在admin组，admin在data2_admin组，data2_admin对data2有读写权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// alice 在admin组，admin在data2_admin组，data2_admin对data2有读写权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;bob&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforce(e, <span class="string">&quot;bob&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// bob 只对data2有写权限</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="多种RBAC"><a href="#多种RBAC" class="headerlink" title="多种RBAC"></a>多种RBAC</h4><p><code>casbin</code>支持同时存在多个<code>RBAC</code>系统，即用户和资源都有角色：</p>
+<figure class="highlight ini"><table><tr><td class="code"><pre><span class="line"><span class="comment"># rbac_with_resource_roles_model.conf</span></span><br><span class="line"><span class="section">[request_definition]</span></span><br><span class="line"><span class="attr">r</span> = sub, obj, act</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_definition]</span></span><br><span class="line"><span class="attr">p</span> = sub, obj, act</span><br><span class="line"></span><br><span class="line"><span class="section">[role_definition]</span></span><br><span class="line"><span class="attr">g</span> = _, _</span><br><span class="line"><span class="attr">g2</span> = _, _</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_effect]</span></span><br><span class="line"><span class="attr">e</span> = some(where (p.eft == allow))</span><br><span class="line"></span><br><span class="line"><span class="section">[matchers]</span></span><br><span class="line"><span class="attr">m</span> = g(r.sub, p.sub) &amp;&amp; g2(r.obj, p.obj) &amp;&amp; r.act == p.act</span><br></pre></td></tr></table></figure>
+
+<p>上面的模型文件定义了两个<code>RBAC</code>系统<code>g</code>和<code>g2</code>，我们在匹配器中使用<code>g(r.sub, p.sub)</code>判断请求主体属于特定组，<code>g2(r.obj, p.obj)</code>判断请求资源属于特定组，且操作一致即可放行。</p>
+<figure class="highlight"><table><tr><td class="code"><pre><span class="line"><span class="comment"># rbac_with_resource_roles_policy.csv</span></span><br><span class="line">p, alice, data1, read</span><br><span class="line">p, bob, data2, write</span><br><span class="line">p, data_group_admin, data_group, write</span><br><span class="line"></span><br><span class="line">g, alice, data_group_admin</span><br><span class="line">g2, data1, data_group</span><br><span class="line">g2, data2, data_group</span><br></pre></td></tr></table></figure>
+
+<p>上面的策略文件表示，alice属于data_group_admin，资源data1和资源data2都属于data_group，且data_group_admin对data_group中的资源有写权限，所以alice对data1和data2都有了写权限。</p>
+<p>测试代码：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestRBACWithResourceRoles</span><span class="params">()</span></span> &#123;</span><br><span class="line">    e, _ := newEnforcer(<span class="string">&quot;rbac_with_resource_roles_model.conf&quot;</span>, <span class="string">&quot;rbac_with_resource_roles_policy.csv&quot;</span>)</span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">true</span>)  <span class="comment">// alice 对data1有读权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// alice 对data1有写权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforce(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// alice从data_group_admin继承对data2的写权限</span></span><br><span class="line">    testEnforce(e, <span class="string">&quot;bob&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforce(e, <span class="string">&quot;bob&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// bob 只对data2有写权限</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="RBAC-with-Domain"><a href="#RBAC-with-Domain" class="headerlink" title="RBAC with Domain"></a>RBAC with Domain</h4><p>在<code>casbin</code>中，角色可以是全局的，也可以是特定<code>domain</code>（领域）或<code>tenant</code>（租户），可以简单理解为<strong>域</strong>。例如alice在域<code>tenant1</code>中是管理员，拥有比较高的权限，在<code>tenant2</code>可能只是个弟弟。</p>
+<figure class="highlight ini"><table><tr><td class="code"><pre><span class="line"><span class="comment"># rbac_with_domains_model.conf</span></span><br><span class="line"><span class="section">[request_definition]</span></span><br><span class="line"><span class="attr">r</span> = sub, dom, obj, act</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_definition]</span></span><br><span class="line"><span class="attr">p</span> = sub, dom, obj, act</span><br><span class="line"></span><br><span class="line"><span class="section">[role_definition]</span></span><br><span class="line"><span class="attr">g</span> = _, _, _</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_effect]</span></span><br><span class="line"><span class="attr">e</span> = some(where (p.eft == allow))</span><br><span class="line"></span><br><span class="line"><span class="section">[matchers]</span></span><br><span class="line"><span class="attr">m</span> = g(r.sub, p.sub, r.dom) &amp;&amp; r.dom == p.dom &amp;&amp; r.obj == p.obj &amp;&amp; r.act == p.act</span><br></pre></td></tr></table></figure>
+
+<p><code>g=_,_,_</code>表示前者在后者中拥有中间定义的角色，在匹配器中使用<code>g</code>要带上<code>domain</code>。</p>
+<figure class="highlight"><table><tr><td class="code"><pre><span class="line"><span class="comment"># rbac_with_domains_policy.csv</span></span><br><span class="line">p, admin, domain1, data1, read</span><br><span class="line">p, admin, domain1, data1, write</span><br><span class="line">p, admin, domain2, data2, read</span><br><span class="line">p, admin, domain2, data2, write</span><br><span class="line">g, alice, admin, domain1</span><br><span class="line">g, bob, admin, domain2</span><br></pre></td></tr></table></figure>
+
+<p>policy策略表明alice在domain1为admin角色，bob在domain2为admin角色。</p>
+<p>测试代码：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestRBACWithDomain</span><span class="params">()</span></span> &#123;</span><br><span class="line">    e, _ := newEnforcer(<span class="string">&quot;rbac_with_domains_model.conf&quot;</span>, <span class="string">&quot;rbac_with_domains_policy.csv&quot;</span>)</span><br><span class="line">    testEnforceWithDomain(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;domain1&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">true</span>)  <span class="comment">// alice 对data1有读权限</span></span><br><span class="line">    testEnforceWithDomain(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;domain1&quot;</span>, <span class="string">&quot;data1&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// alice 对data1有写权限</span></span><br><span class="line">    testEnforceWithDomain(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;domain2&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforceWithDomain(e, <span class="string">&quot;alice&quot;</span>, <span class="string">&quot;domain2&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforceWithDomain(e, <span class="string">&quot;bob&quot;</span>, <span class="string">&quot;domain2&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">true</span>)</span><br><span class="line">    testEnforceWithDomain(e, <span class="string">&quot;bob&quot;</span>, <span class="string">&quot;domain2&quot;</span>, <span class="string">&quot;data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>) <span class="comment">// bob 只对data2有写权限</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="ABAC"><a href="#ABAC" class="headerlink" title="ABAC"></a>ABAC</h3><p><code>ABAC</code>是<code>Attribute-based access control</code>的缩写，称为基于属性的访问控制。ABAC适用于特殊的、动态的权限控制需求。</p>
+<p><strong>典型应用：</strong></p>
+<ul>
+<li>特定时间段不同的策略;</li>
+<li>年龄分级准入控制</li>
+<li>发帖者可以编辑/删除评论(如果是RBAC, 会为发帖者定义一个角色, 但是每个帖子都要新增一条用户/发帖角色的记录);</li>
+<li>微信聊天消息超过2分钟则不再允许撤回;</li>
+<li>12306 只有实名认证后的账号才能购票;</li>
+</ul>
+<figure class="highlight ini"><table><tr><td class="code"><pre><span class="line"><span class="comment"># abac_model.conf</span></span><br><span class="line"><span class="section">[request_definition]</span></span><br><span class="line"><span class="attr">r</span> = sub, obj, act, env</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_definition]</span></span><br><span class="line"><span class="attr">p</span> = sub, obj,act</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_effect]</span></span><br><span class="line"><span class="attr">e</span> = some(where (p.eft == allow))</span><br><span class="line"></span><br><span class="line"><span class="section">[matchers]</span></span><br><span class="line"><span class="attr">m</span> = r.sub.Role==<span class="string">&#x27;Teacher&#x27;</span> &amp;&amp; r.obj.Name==<span class="string">&#x27;School Gate&#x27;</span> &amp;&amp; r.act in(<span class="string">&#x27;In&#x27;</span>,<span class="string">&#x27;Out&#x27;</span>) &amp;&amp; r.env.Time.Hour &gt;=<span class="number">8</span> &amp;&amp; r.env.Time.Hour &lt;= <span class="number">18</span></span><br></pre></td></tr></table></figure>
+
+<p>request_definition中定义了传给Enforce()方法的参数个数，分别是sub, obj, act, env。单纯的ABAC模式可以不指定任何policy，Enforce()方法根据传入的参数代入matchers进行动态判断（归功于<a href="https://github.com/Knetic/govaluate">govaluate库</a>），结合policy_effect计算出最终结果。</p>
+<p>示例代码：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestABAC</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">type</span> User <span class="keyword">struct</span> &#123;</span><br><span class="line">        Role <span class="keyword">string</span></span><br><span class="line">        Name <span class="keyword">string</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">type</span> Subject <span class="keyword">struct</span> &#123;</span><br><span class="line">        Name <span class="keyword">string</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">type</span> Env <span class="keyword">struct</span> &#123;</span><br><span class="line">        Time time.Time</span><br><span class="line">    &#125;</span><br><span class="line">    initEnv := <span class="function"><span class="keyword">func</span><span class="params">(hour <span class="keyword">int</span>)</span> *<span class="title">Env</span></span> &#123;</span><br><span class="line">        env := &amp;Env&#123;&#125;</span><br><span class="line">        env.Time = time.Date(<span class="number">2020</span>, <span class="number">9</span>, <span class="number">17</span>, hour, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, time.Local)</span><br><span class="line">        <span class="keyword">return</span> env</span><br><span class="line">    &#125;</span><br><span class="line">    e, _ := newEnforcer(<span class="string">&quot;abac_model.conf&quot;</span>, <span class="string">&quot;&quot;</span>)</span><br><span class="line">    lee, schoolGate, act, env := User&#123;Name: <span class="string">&quot;lee&quot;</span>, Role: <span class="string">&quot;Teacher&quot;</span>&#125;, Subject&#123;Name: <span class="string">&quot;School Gate&quot;</span>&#125;, <span class="string">&quot;In&quot;</span>, initEnv(<span class="number">10</span>)</span><br><span class="line">    <span class="keyword">if</span> ok, _ := e.Enforce(lee, schoolGate, act, env); ok != <span class="literal">true</span> &#123;</span><br><span class="line">        fmt.Printf(<span class="string">&quot;不符合预期！&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    lee, schoolGate, act, env = User&#123;Name: <span class="string">&quot;lee&quot;</span>, Role: <span class="string">&quot;Teacher&quot;</span>&#125;, Subject&#123;Name: <span class="string">&quot;School Gate&quot;</span>&#125;, <span class="string">&quot;Out&quot;</span>, initEnv(<span class="number">6</span>)</span><br><span class="line">    <span class="keyword">if</span> ok, _ := e.Enforce(lee, schoolGate, act, env); ok != <span class="literal">false</span> &#123;</span><br><span class="line">        fmt.Printf(<span class="string">&quot;不符合预期！&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    wang, schoolGate, act, env := User&#123;Name: <span class="string">&quot;wang&quot;</span>, Role: <span class="string">&quot;Student&quot;</span>&#125;, Subject&#123;Name: <span class="string">&quot;School Gate&quot;</span>&#125;, <span class="string">&quot;Out&quot;</span>, initEnv(<span class="number">6</span>)</span><br><span class="line">    <span class="keyword">if</span> ok, _ := e.Enforce(wang, schoolGate, act, env); ok != <span class="literal">false</span> &#123;</span><br><span class="line">        fmt.Printf(<span class="string">&quot;不符合预期！&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>适配复杂且大量的ABAC规则</strong></p>
+<p>上面一个例子的问题在于，一旦管理的对象变更，需要修改model.conf，而权限模型文件一般是不允许变更的。Casbin 提供了eval()函数，可以把规则写入policy文件，这样也有了RBAC和ABAC搭配使用的能力。</p>
+<figure class="highlight ini"><table><tr><td class="code"><pre><span class="line"><span class="comment"># abac_with_policy_model.conf</span></span><br><span class="line"><span class="section">[request_definition]</span></span><br><span class="line"><span class="attr">r</span> = sub, obj, act</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_definition]</span></span><br><span class="line"><span class="attr">p</span> = sub_rule, obj, act</span><br><span class="line"></span><br><span class="line"><span class="section">[policy_effect]</span></span><br><span class="line"><span class="attr">e</span> = some(where (p.eft == allow))</span><br><span class="line"></span><br><span class="line"><span class="section">[matchers]</span></span><br><span class="line"><span class="attr">m</span> = eval(p.sub_rule) &amp;&amp; r.obj == p.obj &amp;&amp; r.act == p.act</span><br></pre></td></tr></table></figure>
+
+<p><code>eval()</code>函数去匹配policy文件中的策略：</p>
+<figure class="highlight"><table><tr><td class="code"><pre><span class="line"><span class="comment"># abac_with_policy_policy.csv</span></span><br><span class="line">p, r.sub.Age &gt; 18, /data1, read</span><br><span class="line">p, r.sub.Age &lt; 60, /data2, write</span><br></pre></td></tr></table></figure>
+
+<p>代码示例：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">TestABACWithPolicy</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">type</span> User <span class="keyword">struct</span> &#123;</span><br><span class="line">        Age  <span class="keyword">int</span></span><br><span class="line">        Name <span class="keyword">string</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    e, _ := newEnforcer(<span class="string">&quot;abac_with_policy_model.conf&quot;</span>, <span class="string">&quot;abac_with_policy_policy.csv&quot;</span>)</span><br><span class="line">    zhao, qian := User&#123;Age: <span class="number">20</span>, Name: <span class="string">&quot;zhao&quot;</span>&#125;, User&#123;Age: <span class="number">16</span>, Name: <span class="string">&quot;qian&quot;</span>&#125;</span><br><span class="line">    testEnforce(e, zhao, <span class="string">&quot;/data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">true</span>)</span><br><span class="line">    testEnforce(e, zhao, <span class="string">&quot;/data1&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforce(e, zhao, <span class="string">&quot;/data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>)</span><br><span class="line">    testEnforce(e, zhao, <span class="string">&quot;/data2&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforce(e, qian, <span class="string">&quot;/data1&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforce(e, qian, <span class="string">&quot;/data1&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">    testEnforce(e, qian, <span class="string">&quot;/data2&quot;</span>, <span class="string">&quot;write&quot;</span>, <span class="literal">true</span>)</span><br><span class="line">    testEnforce(e, qian, <span class="string">&quot;/data2&quot;</span>, <span class="string">&quot;read&quot;</span>, <span class="literal">false</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="存储"><a href="#存储" class="headerlink" title="存储"></a>存储</h2><h3 id="模型存储"><a href="#模型存储" class="headerlink" title="模型存储"></a>模型存储</h3><h4 id="从文件加载"><a href="#从文件加载" class="headerlink" title="从文件加载"></a>从文件加载</h4><figure class="highlight go"><table><tr><td class="code"><pre><span class="line">e := casbin.NewEnforcer(<span class="string">&quot;examples/rbac_model.conf&quot;</span>, <span class="string">&quot;examples/rbac_policy.csv&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="从代码加载"><a href="#从代码加载" class="headerlink" title="从代码加载"></a>从代码加载</h4><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Initialize the model from Go code.</span></span><br><span class="line">m := model.NewModel()</span><br><span class="line">m.AddDef(<span class="string">&quot;r&quot;</span>, <span class="string">&quot;r&quot;</span>, <span class="string">&quot;sub, obj, act&quot;</span>)</span><br><span class="line">m.AddDef(<span class="string">&quot;p&quot;</span>, <span class="string">&quot;p&quot;</span>, <span class="string">&quot;sub, obj, act&quot;</span>)</span><br><span class="line">m.AddDef(<span class="string">&quot;g&quot;</span>, <span class="string">&quot;g&quot;</span>, <span class="string">&quot;_, _&quot;</span>)</span><br><span class="line">m.AddDef(<span class="string">&quot;e&quot;</span>, <span class="string">&quot;e&quot;</span>, <span class="string">&quot;some(where (p.eft == allow))&quot;</span>)</span><br><span class="line">m.AddDef(<span class="string">&quot;m&quot;</span>, <span class="string">&quot;m&quot;</span>, <span class="string">&quot;g(r.sub, p.sub) &amp;&amp; r.obj == p.obj &amp;&amp; r.act == p.act&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Load the policy rules from the .CSV file adapter.</span></span><br><span class="line"><span class="comment">// 使用自己的 adapter 替换。</span></span><br><span class="line">a := persist.NewFileAdapter(<span class="string">&quot;examples/rbac_policy.csv&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建一个 enforcer。</span></span><br><span class="line">e := casbin.NewEnforcer(m, a)</span><br></pre></td></tr></table></figure>
+
+<h4 id="从字符串加载"><a href="#从字符串加载" class="headerlink" title="从字符串加载"></a>从字符串加载</h4><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Initialize the model from a string.</span></span><br><span class="line">text :=</span><br><span class="line"><span class="string">`</span></span><br><span class="line"><span class="string">[request_definition]</span></span><br><span class="line"><span class="string">r = sub, obj, act</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[policy_definition]</span></span><br><span class="line"><span class="string">p = sub, obj, act</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[role_definition]</span></span><br><span class="line"><span class="string">g = _, _</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[policy_effect]</span></span><br><span class="line"><span class="string">e = some(where (p.eft == allow))</span></span><br><span class="line"><span class="string"></span></span><br><span class="line"><span class="string">[matchers]</span></span><br><span class="line"><span class="string">m = g(r.sub, p.sub) &amp;&amp; r.obj == p.obj &amp;&amp; r.act == p.act</span></span><br><span class="line"><span class="string">`</span></span><br><span class="line">m := NewModel(text)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Load the policy rules from the .CSV file adapter.</span></span><br><span class="line"><span class="comment">// Replace it with your adapter to avoid files.</span></span><br><span class="line">a := persist.NewFileAdapter(<span class="string">&quot;examples/rbac_policy.csv&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// Create the enforcer.</span></span><br><span class="line">e := casbin.NewEnforcer(m, a)</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="策略存储"><a href="#策略存储" class="headerlink" title="策略存储"></a>策略存储</h3><p>在Casbin中，策略存储作为adapter实现，Casbin只内置了简单的csv文件存储实现，如果需要存至database或其他位置，需要实现Adapter接口：</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Adapter is the interface for Casbin adapters.</span></span><br><span class="line"><span class="keyword">type</span> Adapter <span class="keyword">interface</span> &#123;</span><br><span class="line">    <span class="comment">// LoadPolicy loads all policy rules from the storage.</span></span><br><span class="line">    LoadPolicy(model model.Model) error</span><br><span class="line">    <span class="comment">// SavePolicy saves all policy rules to the storage.</span></span><br><span class="line">    SavePolicy(model model.Model) error</span><br><span class="line"></span><br><span class="line">    <span class="comment">// AddPolicy adds a policy rule to the storage.</span></span><br><span class="line">    <span class="comment">// This is part of the Auto-Save feature.</span></span><br><span class="line">    AddPolicy(sec <span class="keyword">string</span>, ptype <span class="keyword">string</span>, rule []<span class="keyword">string</span>) error</span><br><span class="line">    <span class="comment">// RemovePolicy removes a policy rule from the storage.</span></span><br><span class="line">    <span class="comment">// This is part of the Auto-Save feature.</span></span><br><span class="line">    RemovePolicy(sec <span class="keyword">string</span>, ptype <span class="keyword">string</span>, rule []<span class="keyword">string</span>) error</span><br><span class="line">    <span class="comment">// RemoveFilteredPolicy removes policy rules that match the filter from the storage.</span></span><br><span class="line">    <span class="comment">// This is part of the Auto-Save feature.</span></span><br><span class="line">    RemoveFilteredPolicy(sec <span class="keyword">string</span>, ptype <span class="keyword">string</span>, fieldIndex <span class="keyword">int</span>, fieldValues ...<span class="keyword">string</span>) error</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中，<code>LoadPolicy</code>和<code>SavePolicy</code>为必须实现的方法，其余方法是可选的（提供一个空实现即可），实现这些可选方法即可开启策略修改自动保存的特性，否则修改策略后，需要手动调用SavePolicy方法以持久化本次修改。SavePolicy方法将删除存储中的所有策略规则，并将所有策略规则从Casbin enforcer保存到存储中，当策略规则的数量较多时，使用<code>SavePolicy()</code>可能会出现性能问题。</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>LoadPolicy()</td>
+<td>强制的</td>
+<td>从存储中加载所有策略规则</td>
+</tr>
+<tr>
+<td>SavePolicy()</td>
+<td>强制的</td>
+<td>将所有策略规则保存到存储中</td>
+</tr>
+<tr>
+<td>AddPolicy()</td>
+<td>可选择的</td>
+<td>向存储中添加策略规则</td>
+</tr>
+<tr>
+<td>RemovePolicy()</td>
+<td>可选择的</td>
+<td>从存储中删除策略规则</td>
+</tr>
+<tr>
+<td>RemoveFilteredPolicy()</td>
+<td>可选择的</td>
+<td>从存储中删除匹配筛选器的策略规则</td>
+</tr>
+</tbody></table>
+<h2 id="权限管理API"><a href="#权限管理API" class="headerlink" title="权限管理API"></a>权限管理API</h2><p>https：//casbin.org/docs/zh-CN/management-api</p>
+<h2 id="高级功能"><a href="#高级功能" class="headerlink" title="高级功能"></a>高级功能</h2><h3 id="观察者"><a href="#观察者" class="headerlink" title="观察者"></a>观察者</h3><h3 id="Dispatchers"><a href="#Dispatchers" class="headerlink" title="Dispatchers"></a>Dispatchers</h3><h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><p><a href="http://www.jos.org.cn/html/2020/2/5624.htm#outline_anchor_6">http://www.jos.org.cn/html/2020/2/5624.htm#outline_anchor_6</a></p>
+<p><a href="https://juejin.im/post/6844904191257739277#heading-3">https://juejin.im/post/6844904191257739277#heading-3</a></p>
+<p><a href="https://cloud.tencent.com/developer/article/1534674">https://cloud.tencent.com/developer/article/1534674</a></p>
+<p><a href="https://casbin.org/docs/zh-CN/overview">https://casbin.org/docs/zh-CN/overview</a></p>
+<p><a href="https://casbin.org/en/editor/">https://casbin.org/en/editor/</a></p>
+]]></content>
+      <categories>
+        <category>golang</category>
+      </categories>
+      <tags>
+        <tag>golang</tag>
+      </tags>
+  </entry>
 </search>
